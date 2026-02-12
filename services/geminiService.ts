@@ -8,7 +8,7 @@ export const generateStudyGuide = async (
   modification?: string
 ): Promise<StudyGuideContent> => {
   // Initialize the GenAI client with the mandatory named parameter.
-  // Assume process.env.API_KEY is injected by Vercel/Vite.
+  // Using gemini-3-flash-preview to stay within the most generous free tier limits.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const profileString = JSON.stringify(profile, null, 2);
@@ -36,9 +36,9 @@ export const generateStudyGuide = async (
   Keep it simple. Do not wrap in markdown backticks.`;
 
   try {
-    // gemini-3-pro-preview is selected for its superior reasoning in educational tasks.
+    // gemini-3-flash-preview is highly capable and fits best in the free tier for high-frequency use.
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview",
       contents: userPrompt,
       config: {
         systemInstruction: systemInstruction,
@@ -88,7 +88,7 @@ export const generateStudyGuide = async (
       },
     });
 
-    // Access the .text property directly as per GenerateContentResponse guidelines.
+    // Directly access the .text property as per GenerateContentResponse guidelines.
     const jsonString = response.text;
     if (!jsonString) throw new Error("The AI returned an empty response.");
 
