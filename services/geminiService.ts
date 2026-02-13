@@ -8,7 +8,7 @@ export const generateStudyGuide = async (
   modification?: string
 ): Promise<StudyGuideContent> => {
   // Initialize the GenAI client with the mandatory named parameter.
-  // Using gemini-3-flash-preview to stay within the most generous free tier limits.
+  // Using gemini-3-flash-preview for speed and efficiency in the free tier.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const profileString = JSON.stringify(profile, null, 2);
@@ -36,7 +36,6 @@ export const generateStudyGuide = async (
   Keep it simple. Do not wrap in markdown backticks.`;
 
   try {
-    // gemini-3-flash-preview is highly capable and fits best in the free tier for high-frequency use.
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: userPrompt,
@@ -88,7 +87,7 @@ export const generateStudyGuide = async (
       },
     });
 
-    // Directly access the .text property as per GenerateContentResponse guidelines.
+    // Directly access the .text property from GenerateContentResponse.
     const jsonString = response.text;
     if (!jsonString) throw new Error("The AI returned an empty response.");
 
