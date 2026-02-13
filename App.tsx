@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { Home } from './views/Home';
@@ -68,9 +69,13 @@ const App: React.FC = () => {
       } else {
          setHistory(prev => prev.map(g => g.id === newGuide.id ? newGuide : g));
       }
-    } catch (error) {
-      console.error(error);
-      setError("I had a little trouble generating that guide. It might be a network glitch. Please try again!");
+    } catch (err: any) {
+      console.error(err);
+      if (err.message === 'MISSING_API_KEY') {
+        setError("API Key is missing. Please add API_KEY to your Netlify environment variables.");
+      } else {
+        setError("I had a little trouble generating that guide. It might be a network glitch or an API limit. Please try again!");
+      }
     } finally {
       setIsLoading(false);
     }

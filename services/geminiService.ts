@@ -7,9 +7,14 @@ export const generateStudyGuide = async (
   profile: LearningProfile,
   modification?: string
 ): Promise<StudyGuideContent> => {
-  // Initialize the GenAI client with the mandatory named parameter.
-  // Using gemini-3-flash-preview for speed and efficiency in the free tier.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey) {
+    console.error("Gemini API Key is missing! Check your Netlify environment variables.");
+    throw new Error("MISSING_API_KEY");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
 
   const profileString = JSON.stringify(profile, null, 2);
   
@@ -87,13 +92,12 @@ export const generateStudyGuide = async (
       },
     });
 
-    // Directly access the .text property from GenerateContentResponse.
     const jsonString = response.text;
-    if (!jsonString) throw new Error("The AI returned an empty response.");
+    if (!jsonString) throw new Error("EMPTY_RESPONSE");
 
     return JSON.parse(jsonString) as StudyGuideContent;
-  } catch (error) {
-    console.error("Error generating study guide:", error);
+  } catch (error: any) {
+    console.error("Lovable Learner - Gemini Error:", error);
     throw error;
   }
 };
