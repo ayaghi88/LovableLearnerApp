@@ -25,13 +25,6 @@
     <meta property="og:description" content="Personalized, visual, and sensory-friendly study guides tailored to your brain." />
     <meta property="og:image" content="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&h=630&fit=crop" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://lovablelearner.com/" />
-    <meta property="twitter:title" content="Lovable Learner" />
-    <meta property="twitter:description" content="Personalized, visual, and sensory-friendly study guides tailored to your brain." />
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&h=630&fit=crop" />
-
     <meta name="theme-color" content="#3B82F6">
     
     <!-- PWA Manifest -->
@@ -74,9 +67,22 @@
         overscroll-behavior-y: auto;
         -webkit-tap-highlight-color: transparent;
       }
+      
+      /* Accessibility Classes */
+      .accessible-font {
+        font-family: "Comic Sans MS", "Comic Sans", "Lexend", sans-serif !important;
+        letter-spacing: 0.03em;
+        word-spacing: 0.1em;
+      }
+      
+      .increased-spacing {
+        line-height: 2.0 !important;
+      }
+
       h1, h2, h3, h4, h5, h6 {
         font-family: 'Fredoka', sans-serif;
       }
+
       ::-webkit-scrollbar {
         width: 12px;
       }
@@ -102,14 +108,14 @@
   <script type="importmap">
 {
   "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
     "react": "https://esm.sh/react@^19.2.4",
     "react/": "https://esm.sh/react@^19.2.4/",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
+    "mermaid": "https://esm.sh/mermaid@^11.12.2",
     "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
-    "mermaid": "https://esm.sh/mermaid@^11.12.2"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4"
   }
 }
 </script>

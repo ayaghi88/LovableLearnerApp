@@ -9,8 +9,8 @@ export const generateStudyGuide = async (
 ): Promise<StudyGuideContent> => {
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey) {
-    console.error("Gemini API Key is missing! Check your Netlify environment variables.");
+  if (!apiKey || apiKey === "undefined") {
+    console.error("Gemini API Key is missing!");
     throw new Error("MISSING_API_KEY");
   }
 
@@ -24,21 +24,18 @@ export const generateStudyGuide = async (
     userPrompt += `\n\nMODIFICATION REQUEST: ${modification}. Please regenerate the guide focusing on this request.`;
   }
 
-  const systemInstruction = `You are "Lovable Learner AI," designed to teach neurodivergent learners using visual structure, step-by-step breakdowns, hands-on options, and clear explanations.
-
-  Generate a personalized study guide based on the provided LEARNING STYLE and TOPIC.
+  const systemInstruction = `You are "Lovable Learner AI," a specialized educator for neurodivergent minds.
   
-  Tone: Warm, clear, friendly, non-academic, simple.
-  Goal: Make the learner feel capable and supported.
+  Generate a personalized study guide for: ${topic}
   
-  CRITICAL: 
-  1. Flashcards must be populated with ACTUAL content related to the TOPIC. 
-  2. Flashcards must use exact keys "front" and "back". 
-  3. "front" is the question/term, "back" is the explanation.
+  Format Requirements:
+  - summary: 1-2 sentence high-level view.
+  - visualBreakdown: text explanation of the visual diagram.
+  - diagramCode: Mermaid.js diagram code (graph TD). Keep it clean. No markdown code blocks.
+  - steps: breaking complex things into small chunks.
+  - flashcards: front (term) and back (explanation).
   
-  VISUALS:
-  Generate a Mermaid.js diagram code (graph TD or mindmap) for 'diagramCode' that visually explains the concept. 
-  Keep it simple. Do not wrap in markdown backticks.`;
+  Tone: Sensory-friendly, clear, empathetic. Avoid large blocks of academic text. Use bullet points and steps.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -92,12 +89,16 @@ export const generateStudyGuide = async (
       },
     });
 
-    const jsonString = response.text;
+    let jsonString = response.text || "";
+    
+    // Safety check: clean string if model mistakenly wrapped in markdown
+    jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+
     if (!jsonString) throw new Error("EMPTY_RESPONSE");
 
     return JSON.parse(jsonString) as StudyGuideContent;
   } catch (error: any) {
-    console.error("Lovable Learner - Gemini Error:", error);
+    console.error("Gemini Service Error:", error);
     throw error;
   }
 };

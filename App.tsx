@@ -31,16 +31,17 @@ const App: React.FC = () => {
     if (profile) localStorage.setItem('lovable_learner_profile', JSON.stringify(profile));
     localStorage.setItem('lovable_learner_history', JSON.stringify(history));
     
-    // Apply accessible font/spacing to the body
+    // Toggle accessibility classes on the body
     if (profile?.useAccessibleFont) {
-        document.body.style.fontFamily = '"Comic Sans MS", "Open Sans", sans-serif';
+        document.body.classList.add('accessible-font');
     } else {
-        document.body.style.fontFamily = '"Open Sans", sans-serif';
+        document.body.classList.remove('accessible-font');
     }
+
     if (profile?.increasedSpacing) {
-        document.body.style.lineHeight = '1.8';
+        document.body.classList.add('increased-spacing');
     } else {
-        document.body.style.lineHeight = 'normal';
+        document.body.classList.remove('increased-spacing');
     }
   }, [profile, history]);
 
@@ -70,11 +71,13 @@ const App: React.FC = () => {
          setHistory(prev => prev.map(g => g.id === newGuide.id ? newGuide : g));
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("App: Generation Error", err);
       if (err.message === 'MISSING_API_KEY') {
-        setError("API Key is missing. Please add API_KEY to your Netlify environment variables.");
+        setError("API Key is missing. Check your Netlify Site Settings > Environment Variables for API_KEY.");
+      } else if (err.status === 429) {
+        setError("Wow, we're popular! The AI is a bit busy. Please wait 1 minute and try again.");
       } else {
-        setError("I had a little trouble generating that guide. It might be a network glitch or an API limit. Please try again!");
+        setError("I had a little trouble generating that guide. It might be a network glitch. Please try again!");
       }
     } finally {
       setIsLoading(false);
@@ -117,11 +120,14 @@ const App: React.FC = () => {
   return (
     <Layout currentView={view} setView={setView}>
       {error && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl shadow-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-red-500" />
-            <div className="flex-1 text-sm font-medium">{error}</div>
-            <button onClick={() => setError(null)} className="text-red-400"><X className="w-5 h-5" /></button>
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] w-full max-w-md px-4">
+          <div className="bg-white border-2 border-red-500 text-brand-black px-6 py-4 rounded-2xl shadow-2xl flex items-start gap-3 animate-bounce-in">
+            <AlertCircle className="w-6 h-6 mt-0.5 flex-shrink-0 text-red-500" />
+            <div className="flex-1">
+               <h4 className="font-bold text-red-600">Oops!</h4>
+               <p className="text-sm font-medium">{error}</p>
+            </div>
+            <button onClick={() => setError(null)} className="text-gray-400 hover:text-brand-black"><X className="w-5 h-5" /></button>
           </div>
         </div>
       )}
