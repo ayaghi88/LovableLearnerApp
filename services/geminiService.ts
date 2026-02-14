@@ -9,8 +9,8 @@ export const generateStudyGuide = async (
 ): Promise<StudyGuideContent> => {
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey || apiKey === "undefined" || apiKey.length < 10) {
-    console.error("Gemini API Key is missing or invalid!");
+  if (!apiKey || apiKey === "undefined" || apiKey.length < 5) {
+    console.error("Gemini API Key is missing or invalid in environment variables.");
     throw new Error("MISSING_API_KEY");
   }
 
@@ -21,21 +21,14 @@ export const generateStudyGuide = async (
   let userPrompt = `TOPIC: ${topic}\n\nLEARNING STYLE PROFILE:\n${profileString}`;
   
   if (modification) {
-    userPrompt += `\n\nMODIFICATION REQUEST: ${modification}. Please regenerate the guide focusing on this request.`;
+    userPrompt += `\n\nMODIFICATION REQUEST: ${modification}. Please focus specifically on this request while maintaining the neurodivergent-friendly format.`;
   }
 
-  const systemInstruction = `You are "Lovable Learner AI," a world-class educator for neurodivergent minds (ADHD, Autism, Dyslexia).
-  
-  Generate a personalized study guide for: ${topic}
-  
-  Format Requirements (JSON):
-  - summary: 1-2 sentence high-level view.
-  - visualBreakdown: text explanation of the visual diagram.
-  - diagramCode: Mermaid.js code (graph TD). Keep it clean and simple.
-  - steps: breaking complex things into small chunks.
-  - flashcards: front (term) and back (explanation). Must be populated.
-  
-  Tone: Sensory-friendly, clear, and encouraging. Use simple language.`;
+  const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia).
+  Generate a comprehensive study guide in valid JSON format for the requested topic.
+  Keep descriptions clear, short, and use bullet points where helpful.
+  Flashcards must have "front" and "back" keys.
+  The diagram code must be a simple Mermaid.js graph TD string.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -91,17 +84,19 @@ export const generateStudyGuide = async (
 
     let jsonString = response.text || "";
     
-    // Safety check for accidental markdown wrappers
+    // Clean up response text in case the model returns markdown code blocks despite responseMimeType
     jsonString = jsonString.trim();
     if (jsonString.startsWith("```")) {
-        jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+      jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
     }
 
-    if (!jsonString) throw new Error("EMPTY_RESPONSE");
+    if (!jsonString) {
+      throw new Error("EMPTY_RESPONSE");
+    }
 
     return JSON.parse(jsonString) as StudyGuideContent;
   } catch (error: any) {
-    console.error("Gemini Service Error Details:", error);
+    console.error("Gemini Service Error:", error);
     throw error;
   }
 };

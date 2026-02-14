@@ -23,15 +23,27 @@ const App: React.FC = () => {
   useEffect(() => {
     const savedProfile = localStorage.getItem('lovable_learner_profile');
     const savedHistory = localStorage.getItem('lovable_learner_history');
-    if (savedProfile) setProfile(JSON.parse(savedProfile));
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    if (savedProfile) {
+      try {
+        setProfile(JSON.parse(savedProfile));
+      } catch (e) {
+        console.error("Failed to parse saved profile");
+      }
+    }
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Failed to parse saved history");
+      }
+    }
   }, []);
 
   useEffect(() => {
     if (profile) localStorage.setItem('lovable_learner_profile', JSON.stringify(profile));
     localStorage.setItem('lovable_learner_history', JSON.stringify(history));
     
-    // Toggle accessibility classes on the body
+    // Apply accessibility classes to document body
     if (profile?.useAccessibleFont) {
         document.body.classList.add('accessible-font');
     } else {
@@ -63,7 +75,9 @@ const App: React.FC = () => {
         content,
         createdAt: modification && currentGuide ? currentGuide.createdAt : Date.now()
       };
+      
       setCurrentGuide(newGuide);
+      
       if (!modification) {
          setHistory(prev => [newGuide, ...prev]);
          setView('STUDY_GUIDE');
@@ -73,11 +87,11 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error("App: Generation Error", err);
       if (err.message === 'MISSING_API_KEY') {
-        setError("API Key is missing. Check your Netlify Site Settings > Environment Variables for API_KEY.");
+        setError("API Key is missing. Please add 'API_KEY' to your Netlify Environment Variables.");
       } else if (err.status === 429) {
-        setError("Wow, we're popular! The AI is a bit busy. Please wait 1 minute and try again.");
+        setError("AI is busy! Please wait a moment and try again.");
       } else {
-        setError("I had a little trouble generating that guide. It might be a network glitch. Please try again!");
+        setError("I couldn't generate the study guide right now. Please check your connection and try again.");
       }
     } finally {
       setIsLoading(false);
