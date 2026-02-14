@@ -9,8 +9,8 @@ export const generateStudyGuide = async (
 ): Promise<StudyGuideContent> => {
   const apiKey = process.env.API_KEY;
   
-  if (!apiKey || apiKey === "undefined") {
-    console.error("Gemini API Key is missing!");
+  if (!apiKey || apiKey === "undefined" || apiKey.length < 10) {
+    console.error("Gemini API Key is missing or invalid!");
     throw new Error("MISSING_API_KEY");
   }
 
@@ -24,18 +24,18 @@ export const generateStudyGuide = async (
     userPrompt += `\n\nMODIFICATION REQUEST: ${modification}. Please regenerate the guide focusing on this request.`;
   }
 
-  const systemInstruction = `You are "Lovable Learner AI," a specialized educator for neurodivergent minds.
+  const systemInstruction = `You are "Lovable Learner AI," a world-class educator for neurodivergent minds (ADHD, Autism, Dyslexia).
   
   Generate a personalized study guide for: ${topic}
   
-  Format Requirements:
+  Format Requirements (JSON):
   - summary: 1-2 sentence high-level view.
   - visualBreakdown: text explanation of the visual diagram.
-  - diagramCode: Mermaid.js diagram code (graph TD). Keep it clean. No markdown code blocks.
+  - diagramCode: Mermaid.js code (graph TD). Keep it clean and simple.
   - steps: breaking complex things into small chunks.
-  - flashcards: front (term) and back (explanation).
+  - flashcards: front (term) and back (explanation). Must be populated.
   
-  Tone: Sensory-friendly, clear, empathetic. Avoid large blocks of academic text. Use bullet points and steps.`;
+  Tone: Sensory-friendly, clear, and encouraging. Use simple language.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -91,14 +91,17 @@ export const generateStudyGuide = async (
 
     let jsonString = response.text || "";
     
-    // Safety check: clean string if model mistakenly wrapped in markdown
-    jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+    // Safety check for accidental markdown wrappers
+    jsonString = jsonString.trim();
+    if (jsonString.startsWith("```")) {
+        jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+    }
 
     if (!jsonString) throw new Error("EMPTY_RESPONSE");
 
     return JSON.parse(jsonString) as StudyGuideContent;
   } catch (error: any) {
-    console.error("Gemini Service Error:", error);
+    console.error("Gemini Service Error Details:", error);
     throw error;
   }
 };
