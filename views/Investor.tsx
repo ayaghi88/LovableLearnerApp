@@ -166,15 +166,8 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           >
             <Presentation className="w-8 h-8" /> View Investor Deck
           </Button>
-
-          <div className="w-full text-lg py-6 flex flex-col items-center justify-center gap-2 rounded-xl bg-gray-50 text-brand-black border-2 border-dashed border-gray-200 shadow-sm">
-            <div className="flex items-center gap-2 text-brand-blue font-bold">
-              <Mail className="w-5 h-5" /> Contact Support
-            </div>
-            <span className="font-mono font-bold">customer.service@lovablelearner.com</span>
-          </div>
           
-          <p className="text-xs text-gray-400 italic">For strategic inquiries and deck access assistance.</p>
+          <p className="text-xs text-gray-400 italic">For strategic inquiries and deck access assistance. Support available via the email in the footer.</p>
         </div>
       </div>
 
