@@ -43,7 +43,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }
               <Logo size={28} />
               <span className="font-display font-bold text-brand-black text-xl">Lovable Learner</span>
             </div>
-            <div className="text-sm text-gray-400 font-medium">© 2025 Amber Yaghi | Mission-Driven ND Education</div>
+            <div className="text-sm text-gray-400 font-medium">© 2025 lovablelearner.com | Mission-Driven ND Education</div>
           </div>
           <div className="flex flex-wrap justify-center gap-4 md:gap-8 items-center">
             <button 

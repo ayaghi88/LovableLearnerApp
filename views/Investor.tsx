@@ -64,7 +64,7 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     },
     {
       title: "The Visionary Team",
-      subtitle: "Led by Amber Yaghi",
+      subtitle: "Founder-Led Strategy",
       points: [
         "Expert-driven architecture for high user empathy.",
         "Scaling rapidly to empower 10M+ students by 2027.",
@@ -100,7 +100,7 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         </h1>
         <div className="flex flex-col items-center justify-center gap-2">
            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 text-lg font-medium text-gray-600">
-            <span>Founder: <strong className="text-brand-black">Amber Yaghi</strong></span>
+            <span>Mission-Driven <strong className="text-brand-black">Founder-Led Startup</strong></span>
           </div>
         </div>
       </div>
@@ -154,7 +154,7 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="bg-white p-10 rounded-[2.5rem] border-2 border-brand-blue/10 shadow-2xl flex flex-col gap-6 text-center relative overflow-hidden">
           <div className="space-y-2 mb-4">
             <h4 className="text-2xl font-bold font-display text-brand-black">Project Pitch</h4>
-            <p className="text-gray-500 font-medium">Founder & CEO: Amber Yaghi</p>
+            <p className="text-gray-500 font-medium">lovablelearner.com</p>
           </div>
           
           <Button 
