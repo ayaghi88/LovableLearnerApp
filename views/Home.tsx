@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '../components/Button';
 import { Brain, Sparkles, Eye, Layers, Anchor, ShieldCheck } from 'lucide-react';
+import { Logo } from '../components/Logo';
 
 interface HomeProps {
   onStartQuiz: () => void;
@@ -27,7 +28,8 @@ export const Home: React.FC<HomeProps> = ({ onStartQuiz, onStartLearning, hasPro
           <div className="absolute bottom-[10%] right-[10%] w-40 h-40 bg-brand-green/10 rounded-full blur-3xl animate-pulse delay-700"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto">
+      <div className="relative z-10 w-full max-w-3xl mx-auto flex flex-col items-center">
+        <Logo size={120} className="mb-4" />
         <h1 className="text-5xl md:text-6xl font-bold font-display text-brand-black mb-6">
           Lovable <span className="text-brand-blue">Learner</span>
         </h1>
