@@ -1,42 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    
     <title>Lovable Learner | Neurodivergent-Friendly Study Tool</title>
-    
-    <!-- iOS / Apple Specific Metadata -->
-    <meta name="apple-mobile-web-app-title" content="Lovable">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="application-name" content="Lovable Learner">
-
-    <!-- Primary Meta Tags -->
-    <meta name="title" content="Lovable Learner | Neurodivergent-Friendly Study Tool">
-    <meta name="description" content="A free AI study companion customized for ADHD, Autism, and neurodivergent learners on lovablelearner.com. Generate visual study guides instantly.">
-    
-    <!-- Open Graph / Facebook / LinkedIn -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://lovablelearner.com/" />
-    <meta property="og:site_name" content="Lovable Learner" />
-    <meta property="og:title" content="Lovable Learner" />
-    <meta property="og:description" content="Personalized, visual, and sensory-friendly study guides tailored to your brain." />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?q=80&w=1200&h=630&fit=crop" />
-
-    <meta name="theme-color" content="#3B82F6">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json" />
-
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
-    
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f9e0.png">
-
-    <!-- Tailwind & Fonts -->
+    <meta name="description" content="Personalized, visual, and sensory-friendly study guides tailored to your brain.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <script>
@@ -64,58 +32,29 @@
       body {
         font-family: 'Open Sans', sans-serif;
         background-color: #F3F4F6;
-        overscroll-behavior-y: auto;
         -webkit-tap-highlight-color: transparent;
       }
-      
-      /* Accessibility Classes - Strong override for all child elements */
-      body.accessible-font, 
-      body.accessible-font * {
+      body.accessible-font, body.accessible-font * {
         font-family: "Comic Sans MS", "Comic Sans", "Lexend", sans-serif !important;
         letter-spacing: 0.03em !important;
-        word-spacing: 0.1em !important;
       }
-      
-      body.increased-spacing,
-      body.increased-spacing * {
+      body.increased-spacing, body.increased-spacing * {
         line-height: 2.0 !important;
       }
-
-      h1, h2, h3, h4, h5, h6 {
-        font-family: 'Fredoka', sans-serif;
-      }
-
-      ::-webkit-scrollbar {
-        width: 12px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #3B82F6;
-        border-radius: 6px;
-      }
       @media print {
-        @page { margin: 1.5cm; }
-        body { background-color: white; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        header, button, nav, .no-print, .fixed { display: none !important; }
-        #root { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
-        main { padding: 0 !important; margin: 0 !important; max-width: none !important; }
-        .shadow-sm, .shadow-lg, .shadow-xl { box-shadow: none !important; }
-        .border-l-8 { border-left-width: 0 !important; }
-        p, h1, h2, h3, li { color: black !important; }
-        svg { max-width: 100%; break-inside: avoid; }
+        header, footer, .no-print { display: none !important; }
+        main { padding: 0 !important; }
       }
     </style>
   <script type="importmap">
 {
   "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
     "react": "https://esm.sh/react@^19.2.4",
     "react/": "https://esm.sh/react@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "mermaid": "https://esm.sh/mermaid@^11.12.2",
-    "lucide-react": "https://esm.sh/lucide-react@^0.564.0",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
     "vite": "https://esm.sh/vite@^7.3.1"
   }

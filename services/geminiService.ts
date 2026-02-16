@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningProfile, StudyGuideContent } from "../types";
 
@@ -8,95 +7,78 @@ export const generateStudyGuide = async (
   modification?: string
 ): Promise<StudyGuideContent> => {
   const apiKey = process.env.API_KEY;
-  
-  if (!apiKey || apiKey === "undefined" || apiKey.length < 5) {
-    console.error("Gemini API Key is missing or invalid in environment variables.");
-    throw new Error("MISSING_API_KEY");
-  }
+  if (!apiKey || apiKey === "undefined") throw new Error("MISSING_API_KEY");
 
   const ai = new GoogleGenAI({ apiKey });
-
   const profileString = JSON.stringify(profile, null, 2);
   
-  let userPrompt = `TOPIC: ${topic}\n\nLEARNING STYLE PROFILE:\n${profileString}`;
-  
-  if (modification) {
-    userPrompt += `\n\nMODIFICATION REQUEST: ${modification}. Please focus specifically on this request while maintaining the neurodivergent-friendly format.`;
-  }
-
   const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia).
-  Generate a comprehensive study guide in valid JSON format for the requested topic.
-  Keep descriptions clear, short, and use bullet points where helpful.
-  Flashcards must have "front" and "back" keys.
-  The diagram code must be a simple Mermaid.js graph TD string.`;
+  Your tone must be encouraging, clear, and friendly. Avoid "walls of text."
+  
+  CONTENT RULES:
+  1. Flashcards: Generate strictly between 10 and 20 high-quality flashcards.
+  2. Hands-on Practice: Provide at least 3 concrete exercises using "Try this" phrasing.
+  3. Memory Hacks: Include specific ND strategies like chunking, color coding, patterns, repetition, and visual associations.
+  4. Logic: Always explain "WHY" a step matters if the profile requests it.
+  5. Format: Valid JSON only. Use Mermaid graph TD for diagrams.
+  
+  TARGET AUDIENCE: Ages 8 to Adult (Simple but not childish).`;
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: userPrompt,
-      config: {
-        systemInstruction: systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: { 
-          type: Type.OBJECT,
-          properties: {
-            summary: { type: Type.STRING },
-            visualBreakdown: { type: Type.STRING },
-            diagramCode: { type: Type.STRING },
-            steps: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  step: { type: Type.STRING },
-                  explanation: { type: Type.STRING },
-                  whyItMatters: { type: Type.STRING },
-                },
-                required: ["step", "explanation", "whyItMatters"],
+  let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
+  if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: prompt,
+    config: {
+      systemInstruction,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          summary: { type: Type.STRING },
+          visualBreakdown: { type: Type.STRING },
+          diagramCode: { type: Type.STRING },
+          steps: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                step: { type: Type.STRING },
+                explanation: { type: Type.STRING },
+                whyItMatters: { type: Type.STRING },
               },
-            },
-            handsOnPractice: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            memoryAnchors: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING },
-            },
-            flashcards: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  front: { type: Type.STRING },
-                  back: { type: Type.STRING },
-                },
-                required: ["front", "back"],
-              },
-            },
-            pepTalk: { type: Type.STRING },
+              required: ["step", "explanation", "whyItMatters"]
+            }
           },
-          required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk"],
+          handsOnPractice: { type: Type.ARRAY, items: { type: Type.STRING } },
+          memoryAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
+          flashcards: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
+              required: ["front", "back"]
+            }
+          },
+          pepTalk: { type: Type.STRING }
         },
-        temperature: 0.7,
-      },
-    });
-
-    let jsonString = response.text || "";
-    
-    // Clean up response text in case the model returns markdown code blocks despite responseMimeType
-    jsonString = jsonString.trim();
-    if (jsonString.startsWith("```")) {
-      jsonString = jsonString.replace(/^```json/, '').replace(/```$/, '').trim();
+        required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk"]
+      }
     }
+  });
 
-    if (!jsonString) {
-      throw new Error("EMPTY_RESPONSE");
+  return JSON.parse(response.text);
+};
+
+export const chatWithCoach = async (topic: string, message: string, history: any[]): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const chat = ai.chats.create({
+    model: 'gemini-3-flash-preview',
+    config: {
+      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}". Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short.`
     }
-
-    return JSON.parse(jsonString) as StudyGuideContent;
-  } catch (error: any) {
-    console.error("Gemini Service Error:", error);
-    throw error;
-  }
+  });
+  const response = await chat.sendMessage({ message });
+  return response.text;
 };

@@ -1,195 +1,149 @@
 import React, { useState } from 'react';
-import { StudyGuideContent, StudyGuideStep } from '../types';
+import { StudyGuideContent } from '../types';
 import { Button } from '../components/Button';
 import { MermaidDiagram } from '../components/MermaidDiagram';
-import { ArrowLeft, RefreshCw, Layout, Layers, Hand, Brain, CreditCard, Video, Download, Eye, ChevronRight, ChevronLeft, Target } from 'lucide-react';
+import { 
+  ArrowLeft, Layout, Layers, Hand, Brain, CreditCard, 
+  Target, MessageSquare, ChevronRight, ChevronLeft 
+} from 'lucide-react';
 
 interface StudyGuideProps {
   topic: string;
   data: StudyGuideContent;
   onBack: () => void;
-  onRegenerate: (prompt: string) => void;
+  onRegenerate: (topic: string, mod: string) => void;
   onViewFlashcards: () => void;
-  isRegenerating: boolean;
+  onOpenCoach: () => void;
 }
 
 export const StudyGuide: React.FC<StudyGuideProps> = ({ 
-  topic, 
-  data, 
-  onBack, 
-  onRegenerate, 
-  onViewFlashcards,
-  isRegenerating 
+  topic, data, onBack, onViewFlashcards, onOpenCoach 
 }) => {
+  const [activeTab, setActiveTab] = useState<'visual' | 'steps' | 'practice' | 'hacks'>('visual');
   const [focusMode, setFocusMode] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
 
-  const sections = [
-    { id: 'summary', title: 'The Big Picture', icon: <Eye className="w-5 h-5" /> },
-    { id: 'visual', title: 'Visual Map', icon: <Layout className="w-5 h-5" /> },
-    ...data.steps.map((s, i) => ({ id: `step-${i}`, title: `Step ${i + 1}: ${s.step}`, icon: <Layers className="w-5 h-5" /> })),
-    { id: 'hands-on', title: 'Try It Out', icon: <Hand className="w-5 h-5" /> },
-    { id: 'memory', title: 'Memory Anchors', icon: <Brain className="w-5 h-5" /> },
+  const tabs = [
+    { id: 'visual', label: 'Visual Map', icon: <Layout className="w-4 h-4" /> },
+    { id: 'steps', label: 'Steps', icon: <Layers className="w-4 h-4" /> },
+    { id: 'practice', label: 'Practice', icon: <Hand className="w-4 h-4" /> },
+    { id: 'hacks', label: 'Memory Hacks', icon: <Brain className="w-4 h-4" /> },
   ];
 
-  const handlePrint = () => window.print();
-  const handleWatchVideo = () => {
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(topic + " explained simply")}`, '_blank');
-  };
+  if (focusMode) {
+    const focusItems = [
+      { type: 'summary', content: data.summary, title: 'The Big Picture' },
+      ...data.steps.map(s => ({ type: 'step', content: s, title: s.step })),
+      { type: 'practice', content: data.handsOnPractice, title: 'Try It Out' }
+    ];
+    const current = focusItems[focusIndex];
 
-  const nextFocus = () => setFocusIndex(prev => Math.min(prev + 1, sections.length - 1));
-  const prevFocus = () => setFocusIndex(prev => Math.max(prev - 0, 0));
+    return (
+      <div className="fixed inset-0 bg-white z-[100] flex flex-col p-6 animate-fade-in">
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-xl font-bold font-display text-brand-blue">{current.title}</h2>
+          <button onClick={() => setFocusMode(false)} className="text-gray-400 hover:text-brand-black">Exit Focus</button>
+        </div>
+        <div className="flex-1 flex items-center justify-center text-center max-w-2xl mx-auto">
+          {current.type === 'summary' && <p className="text-3xl font-medium leading-relaxed">{current.content as string}</p>}
+          {current.type === 'step' && (
+            <div className="space-y-6 text-left">
+              <p className="text-2xl font-bold text-brand-blue">{(current.content as any).step}</p>
+              <p className="text-xl text-gray-700">{(current.content as any).explanation}</p>
+              <div className="bg-yellow-50 p-4 rounded-xl italic">"{(current.content as any).whyItMatters}"</div>
+            </div>
+          )}
+          {current.type === 'practice' && (
+             <ul className="space-y-4 text-left">
+               {(current.content as string[]).map((p, i) => <li key={i} className="text-xl flex gap-3"><span className="text-brand-green">✓</span> {p}</li>)}
+             </ul>
+          )}
+        </div>
+        <div className="flex gap-4 pb-10">
+          <Button variant="outline" fullWidth onClick={() => setFocusIndex(i => Math.max(0, i - 1))} disabled={focusIndex === 0}><ChevronLeft /> Prev</Button>
+          <Button fullWidth onClick={() => setFocusIndex(i => Math.min(focusItems.length - 1, i + 1))} disabled={focusIndex === focusItems.length - 1}>Next <ChevronRight /></Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 animate-fade-in pb-20">
-      <div className="flex items-center justify-between no-print">
-        <button onClick={onBack} className="flex items-center text-gray-500 hover:text-brand-black transition-colors">
-          <ArrowLeft className="w-5 h-5 mr-1" /> Back
-        </button>
+    <div className="space-y-6 pb-20">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center text-gray-500 hover:text-brand-black"><ArrowLeft className="w-5 h-5 mr-1" /> Dashboard</button>
         <div className="flex gap-2">
-          <Button 
-            variant={focusMode ? "primary" : "outline"}
-            onClick={() => setFocusMode(!focusMode)}
-            className="text-xs px-3 py-2 flex items-center gap-2"
-          >
-            <Target className="w-4 h-4" /> {focusMode ? "Exit Focus" : "Focus Mode"}
-          </Button>
-          <Button variant="outline" onClick={handlePrint} className="text-xs px-3 py-2 flex items-center gap-2">
-            <Download className="w-4 h-4" /> PDF
-          </Button>
+           <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setFocusMode(true)}><Target className="w-4 h-4 mr-2" /> Focus Mode</Button>
+           <Button className="px-3 py-2 text-xs" onClick={onOpenCoach}><MessageSquare className="w-4 h-4 mr-2" /> Ask Coach</Button>
         </div>
       </div>
 
-      {!focusMode ? (
-        <>
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-l-8 border-brand-blue">
-            <h1 className="text-3xl md:text-4xl font-bold font-display mb-2 capitalize">{topic}</h1>
-            <p className="text-xl text-gray-700 leading-relaxed font-medium">{data.summary}</p>
-            <div className="mt-4 flex gap-3">
-               <button onClick={handleWatchVideo} className="flex items-center gap-2 bg-red-100 text-red-600 px-4 py-2 rounded-full text-sm font-bold hover:bg-red-200">
-                <Video className="w-4 h-4" /> YouTube Guides
-               </button>
-            </div>
-          </div>
+      <div className="bg-white p-6 rounded-2xl shadow-sm border-l-8 border-brand-blue">
+        <h1 className="text-3xl font-bold font-display capitalize mb-2">{topic}</h1>
+        <p className="text-gray-600 leading-relaxed">{data.summary}</p>
+      </div>
 
-          <section className="bg-white p-6 md:p-8 rounded-2xl shadow-lg border-t-4 border-brand-blue">
-            <div className="flex items-center gap-2 mb-4 text-brand-blue">
-              <Layout className="w-6 h-6" />
-              <h2 className="text-xl font-bold font-display">Visual Breakdown</h2>
-            </div>
-            {data.diagramCode && (
-              <div className="mb-6 border-2 border-gray-100 rounded-xl overflow-hidden bg-white">
-                <MermaidDiagram code={data.diagramCode} />
-              </div>
-            )}
-            <div className="bg-blue-50 p-4 rounded-xl">
-              <p className="text-gray-700">{data.visualBreakdown}</p>
-            </div>
-          </section>
+      <nav className="flex bg-white rounded-xl p-1 shadow-sm border border-gray-100 overflow-x-auto">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-brand-blue text-white shadow-md' : 'text-gray-400 hover:text-brand-black'}`}
+          >
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </nav>
 
+      <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 min-h-[400px]">
+        {activeTab === 'visual' && (
           <div className="space-y-6">
-            {data.steps.map((step, idx) => (
-              <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="bg-gray-50 px-6 py-3 border-b border-gray-200 flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 bg-brand-black text-white font-bold rounded-full text-sm">{idx + 1}</span>
-                  <h3 className="font-bold text-lg">{step.step}</h3>
+            <div className="bg-gray-50 p-4 rounded-xl overflow-hidden"><MermaidDiagram code={data.diagramCode} /></div>
+            <p className="text-gray-700 bg-blue-50 p-4 rounded-xl border border-blue-100">{data.visualBreakdown}</p>
+          </div>
+        )}
+        {activeTab === 'steps' && (
+          <div className="space-y-4">
+            {data.steps.map((s, i) => (
+              <div key={i} className="border-b border-gray-100 pb-4 last:border-0">
+                <div className="flex gap-3 items-center mb-2">
+                  <span className="w-6 h-6 bg-brand-blue text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span>
+                  <h3 className="font-bold text-lg">{s.step}</h3>
                 </div>
-                <div className="p-6 space-y-4">
-                  <p className="text-gray-700 text-lg">{step.explanation}</p>
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100">
-                    <span className="font-bold text-yellow-800 text-sm block uppercase tracking-wide">Why this matters</span>
-                    <p className="text-yellow-900">{step.whyItMatters}</p>
-                  </div>
-                </div>
+                <p className="text-gray-600 ml-9">{s.explanation}</p>
+                <div className="ml-9 mt-2 text-sm text-yellow-700 font-medium italic">Why: {s.whyItMatters}</div>
               </div>
             ))}
           </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <section className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-brand-green">
-              <div className="flex items-center gap-2 mb-4 text-brand-green">
-                <Hand className="w-6 h-6" />
-                <h2 className="text-xl font-bold font-display">Hands-On Practice</h2>
-              </div>
-              <ul className="space-y-3">
-                {data.handsOnPractice.map((item, idx) => (
-                  <li key={idx} className="flex gap-3 items-start text-gray-700"><span className="text-brand-green mt-1">➜</span>{item}</li>
-                ))}
-              </ul>
-            </section>
-            <section className="bg-white p-6 rounded-2xl shadow-sm border-t-4 border-purple-500">
-              <div className="flex items-center gap-2 mb-4 text-purple-600">
-                <Brain className="w-6 h-6" />
-                <h2 className="text-xl font-bold font-display">Memory Anchors</h2>
-              </div>
-              <ul className="space-y-3">
-                {data.memoryAnchors.map((item, idx) => (
-                  <li key={idx} className="flex gap-3 items-start text-gray-700"><span className="text-purple-500 mt-1">⚓</span>{item}</li>
-                ))}
-              </ul>
-            </section>
-          </div>
-        </>
-      ) : (
-        <div className="bg-white min-h-[60vh] rounded-3xl shadow-xl flex flex-col overflow-hidden border-2 border-brand-blue animate-scale-in">
-          <div className="bg-brand-blue p-4 text-white flex justify-between items-center">
-             <div className="flex items-center gap-3 font-bold">
-                {sections[focusIndex].icon}
-                {sections[focusIndex].title}
+        )}
+        {activeTab === 'practice' && (
+          <div className="space-y-6">
+             <div className="grid gap-4">
+               {data.handsOnPractice.map((p, i) => (
+                 <div key={i} className="flex gap-4 bg-green-50 p-4 rounded-xl border border-green-100 items-start">
+                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-brand-green flex-shrink-0">✓</div>
+                   <p className="font-medium text-green-900 leading-relaxed">{p}</p>
+                 </div>
+               ))}
              </div>
-             <div className="text-sm font-mono">{focusIndex + 1} / {sections.length}</div>
           </div>
-          
-          <div className="flex-1 p-8 md:p-12 flex flex-col justify-center items-center text-center">
-             {focusIndex === 0 && (
-                <p className="text-2xl md:text-3xl font-medium text-brand-black leading-relaxed">{data.summary}</p>
-             )}
-             {focusIndex === 1 && (
-                <div className="w-full max-w-2xl"><MermaidDiagram code={data.diagramCode} /></div>
-             )}
-             {focusIndex > 1 && focusIndex < sections.length - 2 && (
-                <div className="space-y-6 max-w-2xl text-left">
-                   <p className="text-2xl font-bold text-brand-blue">{data.steps[focusIndex - 2].step}</p>
-                   <p className="text-xl text-gray-700 leading-relaxed">{data.steps[focusIndex - 2].explanation}</p>
-                   <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
-                      <p className="text-yellow-800 italic">"This is important because: {data.steps[focusIndex - 2].whyItMatters}"</p>
-                   </div>
-                </div>
-             )}
-             {focusIndex === sections.length - 2 && (
-                <ul className="space-y-4 text-left max-w-xl">
-                   {data.handsOnPractice.map((h, i) => <li key={i} className="text-xl flex gap-3"><span className="text-brand-green">✓</span>{h}</li>)}
-                </ul>
-             )}
-             {focusIndex === sections.length - 1 && (
-                <ul className="space-y-4 text-left max-w-xl">
-                   {data.memoryAnchors.map((m, i) => <li key={i} className="text-xl flex gap-3"><span className="text-purple-500">⚓</span>{m}</li>)}
-                </ul>
-             )}
-          </div>
-
-          <div className="p-6 bg-gray-50 border-t flex justify-between gap-4">
-             <Button variant="outline" onClick={prevFocus} disabled={focusIndex === 0} className="flex-1 flex items-center justify-center gap-2">
-                <ChevronLeft className="w-5 h-5" /> Previous
-             </Button>
-             <Button onClick={nextFocus} disabled={focusIndex === sections.length - 1} className="flex-1 flex items-center justify-center gap-2">
-                Next <ChevronRight className="w-5 h-5" />
-             </Button>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-gradient-to-r from-blue-500 to-brand-blue p-6 rounded-2xl text-white text-center shadow-lg">
-        <p className="text-lg md:text-xl font-medium italic">"{data.pepTalk}"</p>
+        )}
+        {activeTab === 'hacks' && (
+           <div className="grid gap-4">
+             {data.memoryAnchors.map((h, i) => (
+               <div key={i} className="flex gap-4 bg-purple-50 p-4 rounded-xl border border-purple-100 items-start">
+                 <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-purple-600 flex-shrink-0">⚓</div>
+                 <p className="font-medium text-purple-900 leading-relaxed">{h}</p>
+               </div>
+             ))}
+           </div>
+        )}
       </div>
 
-      <div className="fixed bottom-6 right-6 z-40 no-print flex flex-col gap-3 items-end">
-        <button 
-            onClick={onViewFlashcards}
-            className="group flex items-center gap-2 bg-brand-black text-white px-6 py-4 rounded-full shadow-xl hover:scale-105 transition-all"
-        >
-            <CreditCard className="w-6 h-6 text-brand-green" />
-            <span className="font-bold">Practice Flashcards</span>
+      <div className="bg-brand-black text-white p-6 rounded-2xl text-center shadow-xl italic">"{data.pepTalk}"</div>
+
+      <div className="fixed bottom-6 right-6 z-40 no-print">
+        <button onClick={onViewFlashcards} className="flex items-center gap-3 bg-brand-blue text-white px-8 py-5 rounded-full shadow-2xl hover:scale-105 transition-all">
+          <CreditCard className="w-6 h-6" /> <span className="font-bold">Practice Flashcards ({data.flashcards.length})</span>
         </button>
       </div>
     </div>

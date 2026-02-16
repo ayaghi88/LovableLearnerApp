@@ -1,5 +1,5 @@
 export interface LearningProfile {
-  visualPreference: number; // 0-10
+  visualPreference: number;
   handsOnPreference: number;
   stepByStepPreference: number;
   verbalPreference: number;
@@ -39,6 +39,19 @@ export interface StudyGuide {
   createdAt: number;
 }
 
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  unlocked: boolean;
+  icon: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'coach';
+  text: string;
+}
+
 export type ViewState = 
   | 'HOME' 
   | 'QUIZ' 
@@ -46,4 +59,7 @@ export type ViewState =
   | 'TOPIC_SELECTOR' 
   | 'STUDY_GUIDE' 
   | 'FLASHCARDS' 
-  | 'PROFILE';
+  | 'PROFILE'
+  | 'INVESTOR'
+  | 'COACH_CHAT'
+  | 'PROGRESS';
