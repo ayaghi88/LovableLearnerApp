@@ -175,13 +175,18 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({
         <p className="text-xl md:text-2xl font-display font-medium leading-relaxed relative z-10 italic">"{data.pepTalk}"</p>
       </div>
 
-      <div className="fixed bottom-6 right-6 z-40 no-print">
+      {/* Prominent Flashcards Call to Action (In-Flow, No Overlap) */}
+      <div className="pt-10 no-print flex justify-center">
         <button 
           onClick={onViewFlashcards} 
-          className="flex items-center gap-3 bg-brand-blue text-white px-10 py-5 rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all"
+          className="w-full flex items-center justify-center gap-4 bg-brand-blue text-white py-8 rounded-[2rem] shadow-xl hover:scale-[1.02] active:scale-95 transition-all group"
         >
-          <CreditCard className="w-6 h-6" /> 
-          <span className="font-bold text-lg">Practice Flashcards ({data.flashcards.length})</span>
+          <CreditCard className="w-10 h-10 group-hover:rotate-12 transition-transform" /> 
+          <div className="text-left">
+            <div className="font-display font-bold text-3xl">Practice Flashcards</div>
+            <div className="text-blue-100 text-sm font-semibold uppercase tracking-widest">{data.flashcards.length} Interactive Cards Available</div>
+          </div>
+          <ChevronRight className="w-8 h-8 ml-4 group-hover:translate-x-2 transition-transform" />
         </button>
       </div>
     </div>
