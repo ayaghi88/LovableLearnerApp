@@ -1,37 +1,37 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { LearningProfile, StudyGuideContent } from "../types";
 
+// Always initialize GoogleGenAI with a named parameter using process.env.API_KEY directly
 export const generateStudyGuide = async (
   topic: string,
   profile: LearningProfile,
   modification?: string
 ): Promise<StudyGuideContent> => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "undefined") throw new Error("MISSING_API_KEY");
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const profileString = JSON.stringify(profile, null, 2);
   
-  const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia).
-  Your tone must be encouraging, clear, and friendly. Avoid "walls of text."
+  const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
+  Your tone must be encouraging, clear, friendly, and non-overwhelming. Simple but not childish.
   
   CONTENT RULES:
   1. Flashcards: Generate strictly between 10 and 20 high-quality flashcards.
-  2. Hands-on Practice: Provide at least 3 concrete exercises using "Try this" phrasing.
-  3. Memory Hacks: Include specific ND strategies like chunking, color coding, patterns, repetition, and visual associations.
+  2. Hands-on Practice: Provide at least 3 concrete exercises using "Try this" phrasing. Avoid complex math unless the topic specifically requires it.
+  3. Memory Hacks: Include specific ND strategies like chunking, color coding, patterns, repetition, visual associations, and "explain it like a story" tips.
   4. Logic: Always explain "WHY" a step matters if the profile requests it.
-  5. Format: Valid JSON only. Use Mermaid graph TD for diagrams.
+  5. Format: Valid JSON only.
+  6. YouTube: Use your internal search tool (Google Search) to find one high-quality, relevant YouTube educational video link for this specific topic.
   
-  TARGET AUDIENCE: Ages 8 to Adult (Simple but not childish).`;
+  TARGET AUDIENCE: Ages 8 to Adult.`;
 
   let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
   if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3-pro-preview",
     contents: prompt,
     config: {
       systemInstruction,
+      tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
@@ -61,14 +61,16 @@ export const generateStudyGuide = async (
               required: ["front", "back"]
             }
           },
-          pepTalk: { type: Type.STRING }
+          pepTalk: { type: Type.STRING },
+          youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
         },
-        required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk"]
+        required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk", "youtubeLink"]
       }
     }
   });
 
-  return JSON.parse(response.text);
+  // response.text is a property, not a method. Use fallback to empty object string for safety.
+  return JSON.parse(response.text || '{}');
 };
 
 export const chatWithCoach = async (topic: string, message: string, history: any[]): Promise<string> => {
@@ -76,9 +78,10 @@ export const chatWithCoach = async (topic: string, message: string, history: any
   const chat = ai.chats.create({
     model: 'gemini-3-flash-preview',
     config: {
-      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}". Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short.`
+      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}". Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short. Tone: Friendly mentor.`
     }
   });
   const response = await chat.sendMessage({ message });
-  return response.text;
+  // response.text is a property
+  return response.text || "I'm sorry, I couldn't generate a response.";
 };

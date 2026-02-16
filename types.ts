@@ -30,6 +30,7 @@ export interface StudyGuideContent {
   memoryAnchors: string[];
   flashcards: Flashcard[];
   pepTalk: string;
+  youtubeLink?: string;
 }
 
 export interface StudyGuide {

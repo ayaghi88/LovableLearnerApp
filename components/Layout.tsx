@@ -20,8 +20,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }
             <h1 className="text-lg font-bold text-brand-blue font-display">Lovable Learner</h1>
           </div>
           <nav className="flex items-center space-x-4">
-            <button onClick={() => setView('PROGRESS')} className="text-gray-400 hover:text-brand-blue"><Award className="w-5 h-5" /></button>
-            <button onClick={() => setView('PROFILE')} className="text-gray-400 hover:text-brand-blue"><User className="w-5 h-5" /></button>
+            <button onClick={() => setView('PROGRESS')} title="Progress" className="text-gray-400 hover:text-brand-blue transition-colors">
+              <Award className="w-5 h-5" />
+            </button>
+            <button onClick={() => setView('PROFILE')} title="Profile" className="text-gray-400 hover:text-brand-blue transition-colors">
+              <User className="w-5 h-5" />
+            </button>
           </nav>
         </div>
       </header>
@@ -30,14 +34,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, setView }
         {children}
       </main>
 
-      <footer className="bg-white border-t border-gray-100 py-8 px-4 no-print">
-        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-gray-400">© 2025 Lovable Learner | Mission-Driven Education</div>
-          <div className="flex gap-6 items-center">
-            <button onClick={() => setView('INVESTOR')} className="text-sm font-bold text-brand-blue hover:underline flex items-center gap-1">
+      <footer className="bg-white border-t border-gray-100 py-12 px-4 no-print mt-auto">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="text-center md:text-left space-y-2">
+            <div className="flex items-center justify-center md:justify-start gap-2 font-display font-bold text-brand-blue">
+              <BookOpen className="w-5 h-5" /> Lovable Learner
+            </div>
+            <div className="text-sm text-gray-400">© 2025 Amber Yaghi | Mission-Driven ND Education</div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-8 items-center">
+            <button onClick={() => setView('INVESTOR')} className="text-sm font-bold text-brand-blue hover:underline flex items-center gap-1.5 transition-all">
               <TrendingUp className="w-4 h-4" /> Angel Investors
             </button>
-            <a href="mailto:founder@lovablelearner.com" className="text-sm text-gray-500 hover:text-brand-black">Contact Founder</a>
+            <a href="mailto:amber.yaghi@lovablelearner.com" className="text-sm font-semibold text-gray-500 hover:text-brand-black transition-colors">Contact Founder</a>
           </div>
         </div>
       </footer>
