@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '../components/Button';
-import { Brain, Sparkles, Eye, Layers, Anchor, ShieldCheck } from 'lucide-react';
+import { Brain, Sparkles, Eye, Layers, Anchor, ShieldCheck, Heart, ExternalLink } from 'lucide-react';
 import { Logo } from '../components/Logo';
 
 interface HomeProps {
@@ -20,7 +20,7 @@ export const Home: React.FC<HomeProps> = ({ onStartQuiz, onStartLearning, hasPro
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-8 animate-fade-in relative overflow-hidden md:overflow-visible pb-10">
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-12 animate-fade-in relative overflow-hidden md:overflow-visible pb-16">
       
       {/* Background Blobs */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -48,7 +48,7 @@ export const Home: React.FC<HomeProps> = ({ onStartQuiz, onStartLearning, hasPro
         </div>
       </div>
 
-      <div className="grid gap-4 w-full max-w-md relative z-10 mt-4">
+      <div className="grid gap-4 w-full max-w-md relative z-10">
         {!hasProfile ? (
           <Button onClick={onStartQuiz} className="text-lg py-4 shadow-lg flex items-center justify-center gap-2">
             <Brain className="w-6 h-6" />
@@ -71,7 +71,7 @@ export const Home: React.FC<HomeProps> = ({ onStartQuiz, onStartLearning, hasPro
       </div>
 
       {/* Feature Pills */}
-      <div className="mt-12 grid grid-cols-2 md:grid-cols-3 gap-6 text-sm text-gray-500 w-full max-w-2xl relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-sm text-gray-500 w-full max-w-2xl relative z-10">
         <button 
           onClick={handleFeatureClick}
           className="flex flex-col items-center p-4 rounded-xl hover:bg-white hover:shadow-md transition-all duration-200 group bg-white/50 backdrop-blur-sm"
@@ -101,6 +101,34 @@ export const Home: React.FC<HomeProps> = ({ onStartQuiz, onStartLearning, hasPro
           </div>
           <span className="font-semibold group-hover:text-brand-blue">Memory Anchors</span>
         </button>
+      </div>
+
+      {/* Support Section */}
+      <div className="relative z-10 w-full max-w-2xl bg-white/70 backdrop-blur-md rounded-[2.5rem] p-8 md:p-12 border border-blue-100 shadow-xl shadow-blue-500/5 space-y-6">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-brand-red animate-pulse">
+            <Heart className="w-10 h-10 fill-brand-red" />
+          </div>
+          <h2 className="text-3xl font-bold font-display text-brand-black">Support Lovable Learner</h2>
+          <div className="space-y-4 text-gray-600 font-medium max-w-lg leading-relaxed">
+            <p className="text-brand-blue font-bold text-lg">Lovable Learner is free by choice.</p>
+            <p>
+              If this app helps you learn in a way that finally makes sense, you can support its future by becoming a GitHub Sponsor.
+            </p>
+            <p className="text-sm">
+              Your support helps keep the platform accessible and growing — without ads or paywalls.
+            </p>
+          </div>
+          <a 
+            href="https://github.com/sponsors/ayaghi88" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="mt-4 group inline-flex items-center gap-3 bg-brand-black text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl hover:scale-[1.03] active:scale-95 transition-all"
+          >
+            Become a Sponsor
+            <ExternalLink className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          </a>
+        </div>
       </div>
 
       {/* Footer / Security Badge */}
