@@ -64,7 +64,7 @@ const App: React.FC = () => {
       case 'HOME': return <Home onStartQuiz={() => setView('QUIZ')} onStartLearning={() => setView('TOPIC_SELECTOR')} hasProfile={!!profile} />;
       case 'QUIZ': return <Quiz onComplete={(p) => { setProfile(p); setView('RESULTS'); }} />;
       case 'RESULTS': return profile ? <Results profile={profile} onContinue={() => setView('TOPIC_SELECTOR')} /> : null;
-      case 'TOPIC_SELECTOR': return <TopicSelector onSearch={handleTopicSearch} isLoading={isLoading} />;
+      case 'TOPIC_SELECTOR': return <TopicSelector onSearch={handleTopicSearch} isLoading={isLoading} error={error} />;
       case 'STUDY_GUIDE': return currentGuide ? <StudyGuide topic={currentGuide.topic} data={currentGuide.content} onBack={() => setView('TOPIC_SELECTOR')} onRegenerate={handleTopicSearch} onViewFlashcards={() => setView('FLASHCARDS')} onOpenCoach={() => setView('COACH_CHAT')} /> : null;
       case 'FLASHCARDS': return currentGuide ? <Flashcards cards={currentGuide.content.flashcards} onBack={() => setView('STUDY_GUIDE')} /> : null;
       case 'PROFILE': return <Profile profile={profile!} history={history} onResetQuiz={() => setView('QUIZ')} onLoadGuide={(g) => { setCurrentGuide(g); setView('STUDY_GUIDE'); }} onDeleteGuide={(id) => setHistory(h => h.filter(x => x.id !== id))} updateProfile={(u) => setProfile(p => ({...p!, ...u}))} />;

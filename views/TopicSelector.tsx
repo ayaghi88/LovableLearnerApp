@@ -5,9 +5,10 @@ import { Search, Loader2 } from 'lucide-react';
 interface TopicSelectorProps {
   onSearch: (topic: string) => void;
   isLoading: boolean;
+  error?: string | null;
 }
 
-export const TopicSelector: React.FC<TopicSelectorProps> = ({ onSearch, isLoading }) => {
+export const TopicSelector: React.FC<TopicSelectorProps> = ({ onSearch, isLoading, error }) => {
   const [topic, setTopic] = useState('');
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
@@ -73,6 +74,12 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({ onSearch, isLoadin
             </h2>
             <p className="text-gray-500">I'll break it down exactly how your brain likes it.</p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl text-center animate-fade-in">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="relative">
           <input

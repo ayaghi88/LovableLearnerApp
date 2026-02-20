@@ -7,7 +7,7 @@ export const generateStudyGuide = async (
   profile: LearningProfile,
   modification?: string
 ): Promise<StudyGuideContent> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const profileString = JSON.stringify(profile, null, 2);
   
   const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
@@ -27,7 +27,7 @@ export const generateStudyGuide = async (
   if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-pro-preview",
+    model: "gemini-3-flash-preview",
     contents: prompt,
     config: {
       systemInstruction,
@@ -85,7 +85,7 @@ export const generateStudyGuide = async (
 };
 
 export const chatWithCoach = async (topic: string, message: string, history: any[]): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const chat = ai.chats.create({
     model: 'gemini-3-flash-preview',
     config: {
