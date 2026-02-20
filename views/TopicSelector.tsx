@@ -9,6 +9,26 @@ interface TopicSelectorProps {
 
 export const TopicSelector: React.FC<TopicSelectorProps> = ({ onSearch, isLoading }) => {
   const [topic, setTopic] = useState('');
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  const loadingMessages = [
+    "Consulting the AI brain...",
+    "Breaking down complex ideas...",
+    "Finding the best visual map...",
+    "Creating memory anchors for you...",
+    "Almost there! Your brain is going to love this...",
+    "Polishing the steps for clarity..."
+  ];
+
+  React.useEffect(() => {
+    let interval: any;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingMessageIndex(prev => (prev + 1) % loadingMessages.length);
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,6 +36,25 @@ export const TopicSelector: React.FC<TopicSelectorProps> = ({ onSearch, isLoadin
       onSearch(topic);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center space-y-8">
+        <div className="relative">
+          <div className="w-24 h-24 border-4 border-brand-blue/20 border-t-brand-blue rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+             <Search className="w-8 h-8 text-brand-blue animate-pulse" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-2xl font-bold font-display text-brand-black animate-pulse">
+            {loadingMessages[loadingMessageIndex]}
+          </h3>
+          <p className="text-gray-500">This takes about 15-30 seconds. Perfect time for a quick stretch!</p>
+        </div>
+      </div>
+    );
+  }
 
   const suggestions = [
     "Basic Fractions", 

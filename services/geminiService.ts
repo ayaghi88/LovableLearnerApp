@@ -69,8 +69,19 @@ export const generateStudyGuide = async (
     }
   });
 
-  // response.text is a property, not a method. Use fallback to empty object string for safety.
-  return JSON.parse(response.text || '{}');
+  // response.text is a property, not a method.
+  const text = response.text || '{}';
+  
+  // Strip markdown code blocks if present
+  const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
+  const cleanJson = jsonMatch ? jsonMatch[1] : text;
+  
+  try {
+    return JSON.parse(cleanJson);
+  } catch (e) {
+    console.error("Failed to parse JSON from Gemini:", cleanJson);
+    throw new Error("Invalid response format from AI");
+  }
 };
 
 export const chatWithCoach = async (topic: string, message: string, history: any[]): Promise<string> => {
