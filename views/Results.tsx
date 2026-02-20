@@ -57,6 +57,9 @@ export const Results: React.FC<ResultsProps> = ({ profile, onContinue }) => {
                 <Zap className="text-yellow-500 w-5 h-5" /> Superpowers
             </h3>
             <ul className="grid sm:grid-cols-2 gap-3 text-sm">
+                <li className="flex items-center gap-2 bg-purple-50 p-2 rounded text-purple-800 capitalize">
+                    <span className="text-lg">🎂</span> {profile.ageRange} Level Teaching
+                </li>
                 {profile.needWhyExplanations && (
                     <li className="flex items-center gap-2 bg-yellow-50 p-2 rounded text-yellow-800">
                         <span className="text-lg">🤔</span> Needs the "WHY" behind concepts

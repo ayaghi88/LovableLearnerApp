@@ -13,6 +13,13 @@ export const generateStudyGuide = async (
   const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
   Your tone must be encouraging, clear, friendly, and non-overwhelming. Simple but not childish.
   
+  ADAPTATION RULE:
+  The user is in the "${profile.ageRange}" age group. You MUST tailor your language, examples, and complexity to be age-appropriate for a ${profile.ageRange}.
+  - Child: Use simple analogies, playful language, and very basic steps.
+  - Teen: Use relatable examples, clear logic, and avoid being condescending.
+  - Adult: Use professional but clear language, practical real-world applications.
+  - Senior: Use clear, respectful language, patient explanations, and larger context.
+
   CONTENT RULES:
   1. Flashcards: Generate strictly between 10 and 20 high-quality flashcards.
   2. Hands-on Practice: Provide at least 3 concrete exercises using "Try this" phrasing. Avoid complex math unless the topic specifically requires it.
@@ -84,12 +91,13 @@ export const generateStudyGuide = async (
   }
 };
 
-export const chatWithCoach = async (topic: string, message: string, history: any[]): Promise<string> => {
+export const chatWithCoach = async (topic: string, message: string, history: any[], profile?: LearningProfile): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const ageContext = profile ? ` The user is in the "${profile.ageRange}" age group, so adapt your language accordingly.` : '';
   const chat = ai.chats.create({
     model: 'gemini-3-flash-preview',
     config: {
-      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}". Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short. Tone: Friendly mentor.`
+      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}".${ageContext} Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short. Tone: Friendly mentor.`
     }
   });
   const response = await chat.sendMessage({ message });

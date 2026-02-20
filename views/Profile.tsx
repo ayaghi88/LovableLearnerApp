@@ -1,7 +1,7 @@
 import React from 'react';
-import { LearningProfile, StudyGuide } from '../types';
+import { LearningProfile, StudyGuide, AgeRange } from '../types';
 import { Button } from '../components/Button';
-import { Trash2, FileText, Calendar, Sliders, CheckCircle, Type, LayoutGrid } from 'lucide-react';
+import { Trash2, FileText, Calendar, Sliders, CheckCircle, Type, LayoutGrid, Users } from 'lucide-react';
 
 interface ProfileProps {
   profile: LearningProfile;
@@ -48,6 +48,24 @@ export const Profile: React.FC<ProfileProps> = ({
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${profile.increasedSpacing ? 'left-5' : 'left-1'}`} />
             </div>
           </button>
+        </div>
+      </section>
+
+      <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center gap-2 mb-6">
+          <Users className="w-5 h-5 text-brand-blue" />
+          <h2 className="text-xl font-bold text-gray-800">Age Group</h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {(['child', 'teen', 'adult', 'senior'] as AgeRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => updateProfile({ ageRange: range })}
+              className={`px-6 py-3 rounded-xl border-2 font-bold capitalize transition-all ${profile.ageRange === range ? 'border-brand-blue bg-blue-50 text-brand-blue' : 'border-gray-100 bg-white text-gray-500 hover:border-gray-200'}`}
+            >
+              {range}
+            </button>
+          ))}
         </div>
       </section>
 

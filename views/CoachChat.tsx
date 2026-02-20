@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '../components/Button';
 import { chatWithCoach } from '../services/geminiService';
-import { ChatMessage } from '../types';
+import { LearningProfile, ChatMessage } from '../types';
 import { ArrowLeft, Send, Sparkles, Loader2 } from 'lucide-react';
 
-export const CoachChat: React.FC<{ topic: string, onBack: () => void }> = ({ topic, onBack }) => {
+export const CoachChat: React.FC<{ topic: string, profile: LearningProfile, onBack: () => void }> = ({ topic, profile, onBack }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: 'coach', text: `Hi! I'm your Lovable Coach. Got questions about ${topic}? I'm here to help in simple, easy steps!` }
   ]);
@@ -22,7 +22,7 @@ export const CoachChat: React.FC<{ topic: string, onBack: () => void }> = ({ top
     setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
     setLoading(true);
     try {
-      const response = await chatWithCoach(topic, userMsg, messages);
+      const response = await chatWithCoach(topic, userMsg, messages, profile);
       setMessages(prev => [...prev, { role: 'coach', text: response }]);
     } catch {
       setMessages(prev => [...prev, { role: 'coach', text: "Sorry, I had a glitch! Try asking again." }]);

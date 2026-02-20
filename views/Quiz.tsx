@@ -9,6 +9,16 @@ interface QuizProps {
 
 const questions = [
   {
+    id: 'age',
+    text: "What is your age range?",
+    options: [
+      { label: "Child (8-12)", value: 'child' },
+      { label: "Teen (13-19)", value: 'teen' },
+      { label: "Adult (20-64)", value: 'adult' },
+      { label: "Senior (65+)", value: 'senior' }
+    ]
+  },
+  {
     id: 'visual',
     text: "When you learn something new, do you prefer:",
     options: [
@@ -78,6 +88,7 @@ export const Quiz: React.FC<QuizProps> = ({ onComplete }) => {
       needForRepetition: true, // Default high for ND usually
       needWhyExplanations: finalAnswers['why'] === true,
       sensoryPreference: finalAnswers['sensory'] || 'simple_layout',
+      ageRange: finalAnswers['age'] || 'adult',
     };
     onComplete(profile);
   };

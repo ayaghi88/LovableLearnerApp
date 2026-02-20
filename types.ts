@@ -1,3 +1,5 @@
+export type AgeRange = 'child' | 'teen' | 'adult' | 'senior';
+
 export interface LearningProfile {
   visualPreference: number;
   handsOnPreference: number;
@@ -6,6 +8,7 @@ export interface LearningProfile {
   needForRepetition: boolean;
   needWhyExplanations: boolean;
   sensoryPreference: 'silence' | 'minimal_text' | 'simple_layout' | 'standard';
+  ageRange: AgeRange;
   useAccessibleFont?: boolean;
   increasedSpacing?: boolean;
 }

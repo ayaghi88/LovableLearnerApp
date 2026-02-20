@@ -69,7 +69,7 @@ const App: React.FC = () => {
       case 'FLASHCARDS': return currentGuide ? <Flashcards cards={currentGuide.content.flashcards} onBack={() => setView('STUDY_GUIDE')} /> : null;
       case 'PROFILE': return <Profile profile={profile!} history={history} onResetQuiz={() => setView('QUIZ')} onLoadGuide={(g) => { setCurrentGuide(g); setView('STUDY_GUIDE'); }} onDeleteGuide={(id) => setHistory(h => h.filter(x => x.id !== id))} updateProfile={(u) => setProfile(p => ({...p!, ...u}))} />;
       case 'INVESTOR': return <Investor onBack={() => setView('HOME')} />;
-      case 'COACH_CHAT': return currentGuide ? <CoachChat topic={currentGuide.topic} onBack={() => setView('STUDY_GUIDE')} /> : null;
+      case 'COACH_CHAT': return currentGuide ? <CoachChat topic={currentGuide.topic} profile={profile!} onBack={() => setView('STUDY_GUIDE')} /> : null;
       case 'PROGRESS': return <Progress history={history} onBack={() => setView('HOME')} />;
       default: return <Home onStartQuiz={() => setView('QUIZ')} onStartLearning={() => setView('TOPIC_SELECTOR')} hasProfile={!!profile} />;
     }
