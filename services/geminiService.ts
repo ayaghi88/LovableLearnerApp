@@ -7,7 +7,13 @@ export const generateStudyGuide = async (
   profile: LearningProfile,
   modification?: string
 ): Promise<StudyGuideContent> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please ensure it is set in the environment.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const profileString = JSON.stringify(profile, null, 2);
   
   const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
@@ -33,66 +39,66 @@ export const generateStudyGuide = async (
   let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
   if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompt,
-    config: {
-      systemInstruction,
-      tools: [{ googleSearch: {} }],
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          summary: { type: Type.STRING },
-          visualBreakdown: { type: Type.STRING },
-          diagramCode: { type: Type.STRING },
-          steps: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                step: { type: Type.STRING },
-                explanation: { type: Type.STRING },
-                whyItMatters: { type: Type.STRING },
-              },
-              required: ["step", "explanation", "whyItMatters"]
-            }
-          },
-          handsOnPractice: { type: Type.ARRAY, items: { type: Type.STRING } },
-          memoryAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
-          flashcards: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
-              required: ["front", "back"]
-            }
-          },
-          pepTalk: { type: Type.STRING },
-          youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
-        },
-        required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk", "youtubeLink"]
-      }
-    }
-  });
-
-  // response.text is a property, not a method.
-  const text = response.text || '{}';
-  
-  // Strip markdown code blocks if present
-  const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
-  const cleanJson = jsonMatch ? jsonMatch[1] : text;
-  
   try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: prompt,
+      config: {
+        systemInstruction,
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            summary: { type: Type.STRING },
+            visualBreakdown: { type: Type.STRING },
+            diagramCode: { type: Type.STRING },
+            steps: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  step: { type: Type.STRING },
+                  explanation: { type: Type.STRING },
+                  whyItMatters: { type: Type.STRING },
+                },
+                required: ["step", "explanation", "whyItMatters"]
+              }
+            },
+            handsOnPractice: { type: Type.ARRAY, items: { type: Type.STRING } },
+            memoryAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
+            flashcards: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
+                required: ["front", "back"]
+              }
+            },
+            pepTalk: { type: Type.STRING },
+            youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
+          },
+          required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk", "youtubeLink"]
+        }
+      }
+    });
+
+    const text = response.text || '{}';
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
+    const cleanJson = jsonMatch ? jsonMatch[1] : text;
+    
     return JSON.parse(cleanJson);
-  } catch (e) {
-    console.error("Failed to parse JSON from Gemini:", cleanJson);
-    throw new Error("Invalid response format from AI");
+  } catch (e: any) {
+    console.error("Gemini API Error:", e);
+    throw new Error(e.message || "Failed to generate study guide");
   }
 };
 
 export const chatWithCoach = async (topic: string, message: string, history: any[], profile?: LearningProfile): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) return "I'm sorry, I need an API key to help you.";
+
+  const ai = new GoogleGenAI({ apiKey });
   const ageContext = profile ? ` The user is in the "${profile.ageRange}" age group, so adapt your language accordingly.` : '';
   const chat = ai.chats.create({
     model: 'gemini-3-flash-preview',

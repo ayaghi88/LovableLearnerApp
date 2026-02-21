@@ -52,8 +52,8 @@ const App: React.FC = () => {
       setCurrentGuide(newGuide);
       setHistory(prev => [newGuide, ...prev.filter(g => g.topic !== topic)]);
       setView('STUDY_GUIDE');
-    } catch (err) {
-      setError("I couldn't reach the AI brain. Check your connection!");
+    } catch (err: any) {
+      setError(err.message || "I couldn't reach the AI brain. Check your connection!");
     } finally {
       setIsLoading(false);
     }
