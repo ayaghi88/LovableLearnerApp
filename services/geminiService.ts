@@ -32,7 +32,7 @@ export const generateStudyGuide = async (
   3. Memory Hacks: Include specific ND strategies like chunking, color coding, patterns, repetition, visual associations, and "explain it like a story" tips.
   4. Logic: Always explain "WHY" a step matters if the profile requests it.
   5. Format: Valid JSON only.
-  6. YouTube: Use your internal search tool (Google Search) to find one high-quality, relevant YouTube educational video link for this specific topic.
+  6. YouTube: Provide a YouTube search URL for the topic (e.g., https://www.youtube.com/results?search_query=...) that would be most helpful for this topic.
   
   TARGET AUDIENCE: Ages 8 to Adult.`;
 
@@ -41,11 +41,10 @@ export const generateStudyGuide = async (
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-flash-lite-latest",
       contents: prompt,
       config: {
         systemInstruction,
-        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
