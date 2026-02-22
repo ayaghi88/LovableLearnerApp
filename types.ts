@@ -51,11 +51,6 @@ export interface Achievement {
   icon: string;
 }
 
-export interface ChatMessage {
-  role: 'user' | 'coach';
-  text: string;
-}
-
 export type ViewState = 
   | 'HOME' 
   | 'QUIZ' 
@@ -65,5 +60,4 @@ export type ViewState =
   | 'FLASHCARDS' 
   | 'PROFILE'
   | 'INVESTOR'
-  | 'COACH_CHAT'
   | 'PROGRESS';

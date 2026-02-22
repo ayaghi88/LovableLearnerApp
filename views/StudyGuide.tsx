@@ -14,11 +14,10 @@ interface StudyGuideProps {
   onBack: () => void;
   onRegenerate: (topic: string, mod: string) => void;
   onViewFlashcards: () => void;
-  onOpenCoach: () => void;
 }
 
 export const StudyGuide: React.FC<StudyGuideProps> = ({ 
-  topic, data, onBack, onViewFlashcards, onOpenCoach 
+  topic, data, onBack, onViewFlashcards 
 }) => {
   const [activeTab, setActiveTab] = useState<'visual' | 'steps' | 'practice' | 'hacks'>('visual');
   const [focusMode, setFocusMode] = useState(false);
@@ -74,7 +73,6 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({
         <button onClick={onBack} className="flex items-center text-gray-500 hover:text-brand-black transition-colors"><ArrowLeft className="w-5 h-5 mr-1" /> Back</button>
         <div className="flex gap-2">
            <Button variant="outline" className="px-3 py-2 text-xs" onClick={() => setFocusMode(true)}><Target className="w-4 h-4 mr-2" /> Focus Mode</Button>
-           <Button className="px-3 py-2 text-xs" onClick={onOpenCoach}><MessageSquare className="w-4 h-4 mr-2" /> Ask Coach</Button>
         </div>
       </div>
 

@@ -93,20 +93,3 @@ export const generateStudyGuide = async (
     throw new Error(e.message || "Failed to generate study guide");
   }
 };
-
-export const chatWithCoach = async (topic: string, message: string, history: any[], profile?: LearningProfile): Promise<string> => {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
-  if (!apiKey) return "I'm sorry, I need an API key to help you.";
-
-  const ai = new GoogleGenAI({ apiKey });
-  const ageContext = profile ? ` The user is in the "${profile.ageRange}" age group, so adapt your language accordingly.` : '';
-  const chat = ai.chats.create({
-    model: 'gemini-3-flash-preview',
-    config: {
-      systemInstruction: `You are the Lovable Learner AI Coach. The user is studying "${topic}".${ageContext} Answer their questions in a clear, encouraging, and ADHD-friendly way. Use bullet points and keep answers short. Tone: Friendly mentor.`
-    }
-  });
-  const response = await chat.sendMessage({ message });
-  // response.text is a property
-  return response.text || "I'm sorry, I couldn't generate a response.";
-};
