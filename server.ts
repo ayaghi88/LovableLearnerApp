@@ -25,6 +25,17 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Test routes
+  app.get("/api/health", (req, res) => {
+    logToFile("Received request on /api/health");
+    res.json({ status: "ok" });
+  });
+
+  app.get("/api/generate-guide", (req, res) => {
+    logToFile("Received GET request on /api/generate-guide");
+    res.json({ message: "This route accepts POST requests with topic and profile in the body." });
+  });
+
   // API route for generating study guide
   app.post("/api/generate-guide", async (req, res) => {
     logToFile("Received request on /api/generate-guide");
@@ -42,7 +53,14 @@ async function startServer() {
       }
 
       logToFile(`Generating study guide for topic: ${topic}`);
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
       const profileString = JSON.stringify(profile, null, 2);
 
       const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
@@ -70,7 +88,7 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
       if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-3.5-flash",
         contents: prompt,
         config: {
           systemInstruction,

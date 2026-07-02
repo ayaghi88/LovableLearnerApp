@@ -1,72 +1,54 @@
-import { LearningProfile, StudyGuideContent } from "../types";
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getClientApiKey = (): string => {
-  // Try to find the API key in client-side environment variables
-  const meta = import.meta as any;
-  const apiKey =
-    (meta.env && (meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY)) ||
-    (typeof process !== "undefined" && process.env && (process.env.GEMINI_API_KEY || process.env.API_KEY)) ||
-    "";
-  return typeof apiKey === "string" ? apiKey : "";
-};
+export default async (req: Request) => {
+  // Handle OPTIONS preflight requests for CORS if needed
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
+    });
+  }
 
-export const generateStudyGuide = async (
-  topic: string,
-  profile: LearningProfile,
-  modification?: string
-): Promise<StudyGuideContent> => {
-  console.log("Attempting to generate study guide via server API...");
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" }
+    });
+  }
 
   try {
-    const response = await fetch("/api/generate-guide", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        topic,
-        profile,
-        modification,
-      }),
-    });
+    const { topic, profile, modification } = await req.json();
 
-    const contentType = response.headers.get("content-type") || "";
-    
-    // Check if the response is successful and is JSON
-    if (response.ok && contentType.includes("application/json")) {
-      const data = await response.json();
-      console.log("Successfully generated study guide via server API!");
-      return data as StudyGuideContent;
+    if (!topic || !profile) {
+      return new Response(JSON.stringify({ error: "Missing topic or profile" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    console.warn(
-      `Server API responded with status ${response.status} (${contentType}). Falling back to client-side generation...`
-    );
-  } catch (err) {
-    console.warn("Server API failed. Trying client-side fallback...", err);
-  }
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ 
+        error: "API Key is missing on the server. Please ensure GEMINI_API_KEY is configured in your Netlify Environment Variables." 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
+    }
 
-  // Fallback: Generate guide client-side
-  const clientApiKey = getClientApiKey();
-  if (!clientApiKey) {
-    throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Netlify or Vercel), please set GEMINI_API_KEY or API_KEY in your deployment environment variables."
-    );
-  }
-
-  console.log("Generating study guide client-side using the configured API Key...");
-
-  try {
     const ai = new GoogleGenAI({
-      apiKey: clientApiKey,
+      apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build-client',
+          'User-Agent': 'aistudio-build-netlify',
         }
       }
     });
-
+    
     const profileString = JSON.stringify(profile, null, 2);
 
     const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia).
@@ -142,12 +124,24 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
     const cleanJson = jsonMatch ? jsonMatch[1] : text;
 
-    console.log("Successfully generated study guide client-side!");
-    return JSON.parse(cleanJson) as StudyGuideContent;
-  } catch (clientErr: any) {
-    console.error("Client-side generation failed:", clientErr);
-    throw new Error(
-      clientErr.message || "Failed to generate study guide. Please check your connection and API Key."
-    );
+    return new Response(cleanJson, {
+      status: 200,
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      }
+    });
+  } catch (err: any) {
+    console.error("Netlify Function Gemini Error:", err);
+    return new Response(JSON.stringify({ error: err.message || "Failed to generate study guide" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
+};
+
+export const config = {
+  path: "/api/generate-guide"
 };
