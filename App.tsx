@@ -11,6 +11,8 @@ import { Investor } from './views/Investor';
 import { Progress } from './views/Progress';
 import { generateStudyGuide } from './services/geminiService';
 import { LearningProfile, ViewState, StudyGuide as StudyGuideType } from './types';
+import { User } from 'lucide-react';
+import { Button } from './components/Button';
 
 const App: React.FC = () => {
   const [view, setView] = useState<ViewState>('HOME');
@@ -21,19 +23,27 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const savedProfile = localStorage.getItem('lovable_learner_profile');
-    const savedHistory = localStorage.getItem('lovable_learner_history');
-    if (savedProfile) setProfile(JSON.parse(savedProfile));
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    try {
+      const savedProfile = localStorage.getItem('lovable_learner_profile');
+      const savedHistory = localStorage.getItem('lovable_learner_history');
+      if (savedProfile) setProfile(JSON.parse(savedProfile));
+      if (savedHistory) setHistory(JSON.parse(savedHistory));
+    } catch (err) {
+      console.error("Failed to parse profile/history from local storage:", err);
+    }
   }, []);
 
   useEffect(() => {
-    if (profile) {
-      localStorage.setItem('lovable_learner_profile', JSON.stringify(profile));
-      document.body.classList.toggle('accessible-font', !!profile.useAccessibleFont);
-      document.body.classList.toggle('increased-spacing', !!profile.increasedSpacing);
+    try {
+      if (profile) {
+        localStorage.setItem('lovable_learner_profile', JSON.stringify(profile));
+        document.body.classList.toggle('accessible-font', !!profile.useAccessibleFont);
+        document.body.classList.toggle('increased-spacing', !!profile.increasedSpacing);
+      }
+      localStorage.setItem('lovable_learner_history', JSON.stringify(history));
+    } catch (err) {
+      console.error("Failed to save profile/history to local storage:", err);
     }
-    localStorage.setItem('lovable_learner_history', JSON.stringify(history));
   }, [profile, history]);
 
   const handleTopicSearch = async (topic: string, modification?: string) => {
@@ -66,7 +76,24 @@ const App: React.FC = () => {
       case 'TOPIC_SELECTOR': return <TopicSelector onSearch={handleTopicSearch} isLoading={isLoading} error={error} />;
       case 'STUDY_GUIDE': return currentGuide ? <StudyGuide topic={currentGuide.topic} data={currentGuide.content} onBack={() => setView('TOPIC_SELECTOR')} onRegenerate={handleTopicSearch} onViewFlashcards={() => setView('FLASHCARDS')} /> : null;
       case 'FLASHCARDS': return currentGuide ? <Flashcards cards={currentGuide.content.flashcards} onBack={() => setView('STUDY_GUIDE')} /> : null;
-      case 'PROFILE': return <Profile profile={profile!} history={history} onResetQuiz={() => setView('QUIZ')} onLoadGuide={(g) => { setCurrentGuide(g); setView('STUDY_GUIDE'); }} onDeleteGuide={(id) => setHistory(h => h.filter(x => x.id !== id))} updateProfile={(u) => setProfile(p => ({...p!, ...u}))} />;
+      case 'PROFILE': 
+        if (!profile) {
+          return (
+            <div className="text-center py-12 max-w-md mx-auto space-y-6">
+              <div className="w-16 h-16 bg-blue-50 text-brand-blue rounded-full flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8" />
+              </div>
+              <h2 className="text-2xl font-bold font-display text-brand-black">No profile found yet</h2>
+              <p className="text-gray-500">
+                Please take our quick, neurodivergent-friendly learning style quiz to activate personalized settings and study features!
+              </p>
+              <Button onClick={() => setView('QUIZ')} fullWidth>
+                Take Learning Style Quiz
+              </Button>
+            </div>
+          );
+        }
+        return <Profile profile={profile} history={history} onResetQuiz={() => setView('QUIZ')} onLoadGuide={(g) => { setCurrentGuide(g); setView('STUDY_GUIDE'); }} onDeleteGuide={(id) => setHistory(h => h.filter(x => x.id !== id))} updateProfile={(u) => setProfile(p => ({...p!, ...u}))} />;
       case 'INVESTOR': return <Investor onBack={() => setView('HOME')} />;
       case 'PROGRESS': return <Progress history={history} onBack={() => setView('HOME')} />;
       default: return <Home onStartQuiz={() => setView('QUIZ')} onStartLearning={() => setView('TOPIC_SELECTOR')} hasProfile={!!profile} />;
