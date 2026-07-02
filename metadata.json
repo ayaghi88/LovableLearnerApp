@@ -1,5 +1,8 @@
 {
   "name": "Lovable Learner",
   "description": "A neurodivergent-friendly adaptive learning tool that creates personalized study guides using AI.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
