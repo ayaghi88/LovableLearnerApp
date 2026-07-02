@@ -1,36 +1,19 @@
 
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { GoogleGenAI, Type } from '@google/genai';
-import fs from 'fs';
-import path from 'path';
-
-const VITE_LOG_FILE = path.join(process.cwd(), 'vite-requests.log');
-
-function logViteRequest(message: string) {
-  const timestamp = new Date().toISOString();
-  fs.appendFileSync(VITE_LOG_FILE, `[${timestamp}] ${message}\n`);
-}
-
-// Clear log on start
-try {
-  fs.writeFileSync(VITE_LOG_FILE, 'Vite dev server starting...\n');
-} catch (e) {}
 
 function apiPlugin() {
   return {
     name: 'api-plugin',
     configureServer(server: any) {
       server.middlewares.use(async (req: any, res: any, next: any) => {
-        logViteRequest(`${req.method} ${req.url}`);
         if (req.url?.startsWith('/api/generate-guide') && req.method === 'POST') {
-          logViteRequest("Matched POST /api/generate-guide in Vite plugin");
           try {
             let bodyStr = '';
             for await (const chunk of req) {
               bodyStr += chunk;
             }
-            logViteRequest(`Read body string of length ${bodyStr.length}`);
             
             let parsedBody: any = {};
             try {
@@ -160,16 +143,8 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
 }
 
 export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // Set the third parameter to '' to load all env search regardless of the `VITE_` prefix.
-  const env = loadEnv(mode, process.cwd(), '');
-  
   return {
     plugins: [react(), apiPlugin()],
-    define: {
-      'process.env.API_KEY': JSON.stringify(env.API_KEY || process.env.API_KEY),
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || process.env.GEMINI_API_KEY)
-    },
     server: {
       port: 3000
     }
