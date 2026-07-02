@@ -26,6 +26,12 @@ export interface StudyGuideStep {
   whyItMatters: string;
 }
 
+export interface ExamTrigger {
+  keyword: string;
+  triggerPhrase: string;
+  easyRecall: string;
+}
+
 export interface StudyGuideContent {
   summary: string;
   visualBreakdown: string;
@@ -34,6 +40,7 @@ export interface StudyGuideContent {
   handsOnPractice: string[];
   memoryAnchors: string[];
   flashcards: Flashcard[];
+  examTriggers?: ExamTrigger[];
   pepTalk: string;
   youtubeLink?: string;
 }

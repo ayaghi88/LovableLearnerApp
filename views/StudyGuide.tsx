@@ -5,7 +5,7 @@ import { MermaidDiagram } from '../components/MermaidDiagram';
 import { 
   ArrowLeft, Layout, Layers, Hand, Brain, CreditCard, 
   Target, MessageSquare, ChevronRight, ChevronLeft, Youtube, ExternalLink,
-  Eye
+  Eye, Zap
 } from 'lucide-react';
 
 interface StudyGuideProps {
@@ -19,15 +19,22 @@ interface StudyGuideProps {
 export const StudyGuide: React.FC<StudyGuideProps> = ({ 
   topic, data, onBack, onViewFlashcards 
 }) => {
-  const [activeTab, setActiveTab] = useState<'visual' | 'steps' | 'practice' | 'hacks'>('visual');
+  const [activeTab, setActiveTab] = useState<'visual' | 'steps' | 'practice' | 'hacks' | 'triggers'>('visual');
   const [focusMode, setFocusMode] = useState(false);
   const [focusIndex, setFocusIndex] = useState(0);
+  const [hideRecall, setHideRecall] = useState(false);
+  const [revealedTriggers, setRevealedTriggers] = useState<Record<number, boolean>>({});
+
+  const toggleIndividualReveal = (idx: number) => {
+    setRevealedTriggers(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   const tabs = [
     { id: 'visual', label: 'Visual Map', icon: <Layout className="w-4 h-4" /> },
     { id: 'steps', label: 'Steps', icon: <Layers className="w-4 h-4" /> },
     { id: 'practice', label: 'Practice', icon: <Hand className="w-4 h-4" /> },
     { id: 'hacks', label: 'Memory Hacks', icon: <Brain className="w-4 h-4" /> },
+    { id: 'triggers', label: 'Exam Triggers', icon: <Zap className="w-4 h-4 text-orange-500" /> },
   ];
 
   if (focusMode) {
@@ -165,6 +172,92 @@ export const StudyGuide: React.FC<StudyGuideProps> = ({
                ))}
              </div>
            </div>
+        )}
+        {activeTab === 'triggers' && (
+          <div className="space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-orange-50/60 p-6 rounded-2xl border border-orange-100">
+              <div className="space-y-1">
+                <h3 className="text-xl font-bold font-display text-orange-800 flex items-center gap-2">
+                  <Target className="w-6 h-6 text-orange-500 animate-pulse" /> Exam Spotter & Recall Clues
+                </h3>
+                <p className="text-sm text-orange-700 max-w-xl">
+                  Identify high-yield keywords likely to appear on your sociology or other class exams. Spot the question <strong>clues</strong>, then use the <strong>rapid-recall anchor</strong> to trigger the correct answer instantly!
+                </p>
+              </div>
+              <div className="flex items-center gap-2 self-start md:self-center">
+                <span className="text-xs font-bold uppercase tracking-wider text-orange-600">Active Test Mode:</span>
+                <button
+                  onClick={() => setHideRecall(!hideRecall)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                    hideRecall 
+                      ? 'bg-orange-600 text-white border-orange-600 shadow-md' 
+                      : 'bg-white text-orange-700 border-orange-200 hover:bg-orange-50'
+                  }`}
+                >
+                  {hideRecall ? "🙈 Anchors Hidden" : "👁️ Show All"}
+                </button>
+              </div>
+            </div>
+
+            {/* Triggers Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {(!data.examTriggers || data.examTriggers.length === 0) ? (
+                <div className="col-span-2 text-center py-10 bg-gray-50 rounded-2xl border border-gray-150 space-y-4">
+                  <p className="text-gray-500 font-medium">This guide does not have Exam Triggers generated yet.</p>
+                  <p className="text-sm text-gray-400 font-semibold">Search for this topic again or type a subtopic to generate a fresh, fully loaded study guide!</p>
+                </div>
+              ) : (
+                data.examTriggers.map((trig, idx) => (
+                  <div key={idx} className="bg-white rounded-2xl border border-gray-150 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-all">
+                    <div className="p-6 space-y-4">
+                      {/* Keyword Title */}
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg border border-gray-200">Concept</span>
+                        <span className="text-xs font-mono text-gray-400">#0{idx+1}</span>
+                      </div>
+                      <h4 className="text-xl font-bold text-brand-black font-display leading-tight">{trig.keyword}</h4>
+                      
+                      {/* Clues */}
+                      <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50 space-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-brand-blue uppercase tracking-wider">
+                          <span>🔍 Look out for on test:</span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 leading-relaxed italic">
+                          "{trig.triggerPhrase}"
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Recall Anchor (Show/Hide) */}
+                    <div className="border-t border-gray-100 bg-gray-50/50 p-6">
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-orange-700 uppercase tracking-wider">
+                          <span className="text-lg">🧠</span>
+                          <span>Rapid Recall Anchor:</span>
+                        </div>
+                        
+                        <div className="relative min-h-[44px] flex items-center">
+                          {/* If hidden and not individual click-revealed */}
+                          {(hideRecall && !revealedTriggers[idx]) ? (
+                            <button
+                              onClick={() => toggleIndividualReveal(idx)}
+                              className="w-full py-2 bg-orange-100/80 hover:bg-orange-100 text-orange-800 text-xs font-bold rounded-xl border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all"
+                            >
+                              <span>🔓 Click to Reveal Connection</span>
+                            </button>
+                          ) : (
+                            <p className="text-sm font-semibold text-orange-950 leading-relaxed animate-fade-in">
+                              {trig.easyRecall}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         )}
       </div>
 

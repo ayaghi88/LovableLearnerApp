@@ -87,6 +87,7 @@ CONTENT RULES:
 5. Format: Valid JSON only.
 6. YouTube: Provide a YouTube search URL for the topic (e.g., https://www.youtube.com/results?search_query=...) that would be most helpful for this topic.
 7. diagramCode: This MUST be syntactically valid, simple Mermaid.js code (starting with "graph TD" or "flowchart TD"). Do NOT output plain text, natural language description, or bullet lists here. Every node with spaces or special characters MUST be enclosed in quotes like: A["Individual Biography"] --> B["Social Context"]. Use double-headed arrows like A <--> B to show mutual influence. Keep it simple and clean so it renders successfully.
+8. Exam Triggers: Generate 5 to 8 high-yield exam keywords or concepts. For each, describe the precise clues/phrases to look out for on a test, paired with a super simple, bite-sized recall anchor (like a visual, analogy, or micro-story) to immediately trigger the correct answer.
 
 TARGET AUDIENCE: Ages 8 to Adult.`;
 
@@ -130,10 +131,23 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
                         required: ["front", "back"]
                       }
                     },
+                    examTriggers: {
+                      type: Type.ARRAY,
+                      description: "List of high-yield keywords seen on exams, with their test clues and easy recall anchors.",
+                      items: {
+                        type: Type.OBJECT,
+                        properties: {
+                          keyword: { type: Type.STRING, description: "The exam concept or keyword (e.g., 'Anomie' or 'Conflict Theory')." },
+                          triggerPhrase: { type: Type.STRING, description: "Test question clues to look for (e.g., 'look for: normlessness, social change, breakdown of rules')." },
+                          easyRecall: { type: Type.STRING, description: "Bite-sized visual/narrative recall association (e.g., 'Think: A-no-me = No Rules, lost in space.')." }
+                        },
+                        required: ["keyword", "triggerPhrase", "easyRecall"]
+                      }
+                    },
                     pepTalk: { type: Type.STRING },
                     youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
                   },
-                  required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "pepTalk", "youtubeLink"]
+                  required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "examTriggers", "pepTalk", "youtubeLink"]
                 }
               }
             });
