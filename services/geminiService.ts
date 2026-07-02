@@ -33,6 +33,7 @@ export const generateStudyGuide = async (
   4. Logic: Always explain "WHY" a step matters if the profile requests it.
   5. Format: Valid JSON only.
   6. YouTube: Provide a YouTube search URL for the topic (e.g., https://www.youtube.com/results?search_query=...) that would be most helpful for this topic.
+  7. diagramCode: This MUST be syntactically valid, simple Mermaid.js code (starting with "graph TD" or "flowchart TD"). Do NOT output plain text, natural language description, or bullet lists here. Every node with spaces or special characters MUST be enclosed in quotes like: A["Individual Biography"] --> B["Social Context"]. Use double-headed arrows like A <--> B to show mutual influence. Keep it simple and clean so it renders successfully.
   
   TARGET AUDIENCE: Ages 8 to Adult.`;
 
@@ -51,7 +52,10 @@ export const generateStudyGuide = async (
           properties: {
             summary: { type: Type.STRING },
             visualBreakdown: { type: Type.STRING },
-            diagramCode: { type: Type.STRING },
+            diagramCode: { 
+              type: Type.STRING, 
+              description: "Syntactically valid Mermaid.js graph starting with 'graph TD' or 'flowchart TD'. Node names with spaces must be quoted, e.g. A[\"Label\"] --> B[\"Label\"]." 
+            },
             steps: {
               type: Type.ARRAY,
               items: {
