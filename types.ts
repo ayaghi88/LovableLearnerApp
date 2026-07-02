@@ -11,6 +11,8 @@ export interface LearningProfile {
   ageRange: AgeRange;
   useAccessibleFont?: boolean;
   increasedSpacing?: boolean;
+  superpowers?: string[];
+  neurodivergentType?: string[];
 }
 
 export interface Flashcard {
