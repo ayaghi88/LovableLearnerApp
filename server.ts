@@ -1,27 +1,47 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+
+const LOG_FILE = path.join(process.cwd(), "server.log");
+
+function logToFile(message: string) {
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+}
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Clear log on start
+  fs.writeFileSync(LOG_FILE, `Server starting up on port ${PORT}...\n`);
+
+  app.use((req, res, next) => {
+    logToFile(`${req.method} ${req.url}`);
+    next();
+  });
+
   app.use(express.json());
 
   // API route for generating study guide
   app.post("/api/generate-guide", async (req, res) => {
+    logToFile("Received request on /api/generate-guide");
     try {
       const { topic, profile, modification } = req.body;
       if (!topic || !profile) {
+        logToFile("Error: Missing topic or profile");
         return res.status(400).json({ error: "Missing topic or profile" });
       }
 
       const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
       if (!apiKey) {
+        logToFile("Error: API Key is missing");
         return res.status(500).json({ error: "API Key is missing on the server. Please ensure the API key is configured correctly in the environment." });
       }
 
+      logToFile(`Generating study guide for topic: ${topic}`);
       const ai = new GoogleGenAI({ apiKey });
       const profileString = JSON.stringify(profile, null, 2);
 
@@ -98,8 +118,10 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
       const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
       const cleanJson = jsonMatch ? jsonMatch[1] : text;
 
+      logToFile("Success: Guide generated successfully");
       res.json(JSON.parse(cleanJson));
     } catch (e: any) {
+      logToFile(`Error generating guide: ${e.message}`);
       console.error("Server Gemini API Error:", e);
       res.status(500).json({ error: e.message || "Failed to generate study guide" });
     }
