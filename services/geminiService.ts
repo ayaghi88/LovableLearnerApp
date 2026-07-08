@@ -4,8 +4,18 @@ const getClientApiKey = (): string => {
   // Try to find the API key in client-side environment variables safely in browser
   const meta = import.meta as any;
   if (meta && meta.env) {
-    return meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY || "";
+    const key = meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY;
+    if (key) return key;
   }
+  
+  // Try process.env as fallback (which gets replaced at build-time by Vite's define config)
+  try {
+    const key = process.env.GEMINI_API_KEY || process.env.API_KEY;
+    if (key) return key;
+  } catch (e) {
+    // Ignore ReferenceError in browser if process is not defined
+  }
+  
   return "";
 };
 
@@ -63,7 +73,7 @@ export const generateStudyGuide = async (
   const clientApiKey = getClientApiKey();
   if (!clientApiKey) {
     throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Netlify or Vercel), please set GEMINI_API_KEY or API_KEY in your deployment environment variables."
+      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Cloudflare, Netlify, or Vercel), please set GEMINI_API_KEY or API_KEY in your build/deployment environment variables."
     );
   }
 
