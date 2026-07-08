@@ -1,14 +1,12 @@
 import { LearningProfile, StudyGuideContent } from "../types";
-import { GoogleGenAI, Type } from "@google/genai";
 
 const getClientApiKey = (): string => {
-  // Try to find the API key in client-side environment variables
+  // Try to find the API key in client-side environment variables safely in browser
   const meta = import.meta as any;
-  const apiKey =
-    (meta.env && (meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY)) ||
-    (typeof process !== "undefined" && process.env && (process.env.GEMINI_API_KEY || process.env.API_KEY)) ||
-    "";
-  return typeof apiKey === "string" ? apiKey : "";
+  if (meta && meta.env) {
+    return meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY || "";
+  }
+  return "";
 };
 
 export const generateStudyGuide = async (
@@ -61,7 +59,7 @@ export const generateStudyGuide = async (
     console.warn("Server API failed. Trying client-side fallback...", err);
   }
 
-  // Fallback: Generate guide client-side
+  // Fallback: Generate guide client-side safely via REST endpoint
   const clientApiKey = getClientApiKey();
   if (!clientApiKey) {
     throw new Error(
@@ -69,18 +67,9 @@ export const generateStudyGuide = async (
     );
   }
 
-  console.log("Generating study guide client-side using the configured API Key...");
+  console.log("Generating study guide client-side using browser-safe REST fetch...");
 
   try {
-    const ai = new GoogleGenAI({
-      apiKey: clientApiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build-client',
-        }
-      }
-    });
-
     const profileString = JSON.stringify(profile, null, 2);
 
     const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia, Sensory Processing).
@@ -125,65 +114,78 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
     let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
     if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            summary: { type: Type.STRING },
-            visualBreakdown: { type: Type.STRING },
-            diagramCode: { 
-              type: Type.STRING, 
-              description: "Syntactically valid Mermaid.js graph starting with 'graph TD' or 'flowchart TD'. Node names with spaces must be quoted, e.g. A[\"Label\"] --> B[\"Label\"]." 
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${clientApiKey}`;
+    
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              summary: { type: "STRING" },
+              visualBreakdown: { type: "STRING" },
+              diagramCode: { 
+                type: "STRING", 
+                description: "Syntactically valid Mermaid.js graph starting with 'graph TD' or 'flowchart TD'. Node names with spaces must be quoted, e.g. A[\"Label\"] --> B[\"Label\"]." 
+              },
+              steps: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    step: { type: "STRING" },
+                    explanation: { type: "STRING" },
+                    whyItMatters: { type: "STRING" },
+                  },
+                  required: ["step", "explanation", "whyItMatters"]
+                }
+              },
+              handsOnPractice: { type: "ARRAY", items: { type: "STRING" } },
+              memoryAnchors: { type: "ARRAY", items: { type: "STRING" } },
+              flashcards: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: { front: { type: "STRING" }, back: { type: "STRING" } },
+                  required: ["front", "back"]
+                }
+              },
+              examTriggers: {
+                type: "ARRAY",
+                description: "List of high-yield keywords seen on exams, with their test clues and easy recall anchors.",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    keyword: { type: "STRING", description: "The exam concept or keyword (e.g., 'Anomie' or 'Conflict Theory')." },
+                    triggerPhrase: { type: "STRING", description: "Test question clues to look for (e.g., 'look for: normlessness, social change, breakdown of rules')." },
+                    easyRecall: { type: "STRING", description: "Bite-sized visual/narrative recall association (e.g., 'Think: A-no-me = No Rules, lost in space.')." }
+                  },
+                  required: ["keyword", "triggerPhrase", "easyRecall"]
+                }
+              },
+              pepTalk: { type: "STRING" },
+              youtubeLink: { type: "STRING", description: "A relevant YouTube video URL for the topic." }
             },
-            steps: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  step: { type: Type.STRING },
-                  explanation: { type: Type.STRING },
-                  whyItMatters: { type: Type.STRING },
-                },
-                required: ["step", "explanation", "whyItMatters"]
-              }
-            },
-            handsOnPractice: { type: Type.ARRAY, items: { type: Type.STRING } },
-            memoryAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
-            flashcards: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
-                required: ["front", "back"]
-              }
-            },
-            examTriggers: {
-              type: Type.ARRAY,
-              description: "List of high-yield keywords seen on exams, with their test clues and easy recall anchors.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  keyword: { type: Type.STRING, description: "The exam concept or keyword (e.g., 'Anomie' or 'Conflict Theory')." },
-                  triggerPhrase: { type: Type.STRING, description: "Test question clues to look for (e.g., 'look for: normlessness, social change, breakdown of rules')." },
-                  easyRecall: { type: Type.STRING, description: "Bite-sized visual/narrative recall association (e.g., 'Think: A-no-me = No Rules, lost in space.')." }
-                },
-                required: ["keyword", "triggerPhrase", "easyRecall"]
-              }
-            },
-            pepTalk: { type: Type.STRING },
-            youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
-          },
-          required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "examTriggers", "pepTalk", "youtubeLink"]
+            required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "examTriggers", "pepTalk", "youtubeLink"]
+          }
         }
-      }
+      })
     });
 
-    const text = response.text || '{}';
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Gemini API responded with status ${response.status}: ${errText}`);
+    }
+
+    const resJson = await response.json();
+    const text = resJson.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
     const cleanJson = jsonMatch ? jsonMatch[1] : text;
 
