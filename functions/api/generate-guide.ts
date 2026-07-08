@@ -1,104 +1,60 @@
-import { LearningProfile, StudyGuideContent } from "../types";
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getClientApiKey = (): string => {
-  // Try to find the API key in client-side environment variables
-  const meta = import.meta as any;
-  const apiKey =
-    (meta.env && (meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY)) ||
-    (typeof process !== "undefined" && process.env && (process.env.GEMINI_API_KEY || process.env.API_KEY)) ||
-    "";
-  return typeof apiKey === "string" ? apiKey : "";
-};
+interface Env {
+  GEMINI_API_KEY?: string;
+  API_KEY?: string;
+}
 
-export const generateStudyGuide = async (
-  topic: string,
-  profile: LearningProfile,
-  modification?: string
-): Promise<StudyGuideContent> => {
-  console.log("Attempting to generate study guide via server API...");
+export async function onRequestOptions() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    }
+  });
+}
+
+export async function onRequestPost(context: { request: Request; env: Env }) {
+  const { request, env } = context;
+
+  // Handle CORS preflight if needed
+  const corsHeaders = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+  };
 
   try {
-    const response = await fetch("/api/generate-guide", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        topic,
-        profile,
-        modification,
-      }),
-    });
+    const { topic, profile, modification } = await request.json();
 
-    const contentType = response.headers.get("content-type") || "";
-    const responseText = await response.text();
-    
-    // Check if the response is successful and is JSON
-    if (response.ok && contentType.includes("application/json")) {
-      try {
-        const data = JSON.parse(responseText);
-        console.log("Successfully generated study guide via server API!");
-        return data as StudyGuideContent;
-      } catch (jsonErr) {
-        console.error("Failed to parse successful response JSON", jsonErr);
-      }
+    if (!topic || !profile) {
+      return new Response(JSON.stringify({ error: "Missing topic or profile" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
 
-    // If it's a server error response (not ok)
-    if (!response.ok) {
-      let errorMessage = `Server responded with status ${response.status}`;
-      if (contentType.includes("application/json")) {
-        try {
-          const errData = JSON.parse(responseText);
-          if (errData && errData.error) {
-            errorMessage = errData.error;
-          } else if (errData && errData.message) {
-            errorMessage = errData.message;
-          }
-        } catch (e) {
-          if (responseText && responseText.length < 250) {
-            errorMessage = responseText;
-          }
-        }
-      } else {
-        if (responseText && responseText.length < 250) {
-          errorMessage = responseText;
-        }
-      }
-      throw new Error(`Server Error: ${errorMessage}`);
+    const apiKey = env.GEMINI_API_KEY || env.API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ 
+        error: "API Key is missing on the server. Please ensure GEMINI_API_KEY is configured in your Cloudflare Pages Environment Variables under Settings -> Environment Variables in the Cloudflare Pages dashboard." 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
     }
 
-    console.warn(
-      `Server API responded with status ${response.status} (${contentType}). Falling back to client-side generation...`
-    );
-  } catch (err: any) {
-    if (err.message && err.message.startsWith("Server Error:")) {
-      throw err;
-    }
-    console.warn("Server API failed. Trying client-side fallback...", err);
-  }
-
-  // Fallback: Generate guide client-side
-  const clientApiKey = getClientApiKey();
-  if (!clientApiKey) {
-    throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting on Cloudflare, please configure GEMINI_API_KEY as an Environment Variable in your Cloudflare Pages dashboard (under Settings -> Environment Variables) so that our Pages Functions can securely communicate with Gemini."
-    );
-  }
-
-  console.log("Generating study guide client-side using the configured API Key...");
-
-  try {
     const ai = new GoogleGenAI({
-      apiKey: clientApiKey,
+      apiKey,
       httpOptions: {
         headers: {
-          'User-Agent': 'aistudio-build-client',
+          'User-Agent': 'aistudio-build-cloudflare',
         }
       }
     });
-
+    
     const profileString = JSON.stringify(profile, null, 2);
 
     const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia, Sensory Processing).
@@ -205,12 +161,18 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
     const cleanJson = jsonMatch ? jsonMatch[1] : text;
 
-    console.log("Successfully generated study guide client-side!");
-    return JSON.parse(cleanJson) as StudyGuideContent;
-  } catch (clientErr: any) {
-    console.error("Client-side generation failed:", clientErr);
-    throw new Error(
-      clientErr.message || "Failed to generate study guide. Please check your connection and API Key."
-    );
+    return new Response(cleanJson, {
+      status: 200,
+      headers: { 
+        "Content-Type": "application/json",
+        ...corsHeaders
+      }
+    });
+  } catch (err: any) {
+    console.error("Cloudflare Function Gemini Error:", err);
+    return new Response(JSON.stringify({ error: err.message || "Failed to generate study guide" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...corsHeaders }
+    });
   }
-};
+}
