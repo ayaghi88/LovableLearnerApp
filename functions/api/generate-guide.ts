@@ -1,5 +1,3 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
 interface Env {
   GEMINI_API_KEY?: string;
   API_KEY?: string;
@@ -19,7 +17,7 @@ export async function onRequestOptions() {
 export async function onRequestPost(context: { request: Request; env: Env }) {
   const { request, env } = context;
 
-  // Handle CORS preflight if needed
+  // Handle CORS headers
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -27,7 +25,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   };
 
   try {
-    const { topic, profile, modification } = await request.json();
+    const { topic, profile, modification } = await request.json() as any;
 
     if (!topic || !profile) {
       return new Response(JSON.stringify({ error: "Missing topic or profile" }), {
@@ -46,15 +44,6 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
       });
     }
 
-    const ai = new GoogleGenAI({
-      apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build-cloudflare',
-        }
-      }
-    });
-    
     const profileString = JSON.stringify(profile, null, 2);
 
     const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia, Sensory Processing).
@@ -99,69 +88,95 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
     let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
     if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        systemInstruction,
+    // Zero-dependency direct fetch call to Google Gemini API
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    
+    const payload = {
+      contents: [
+        {
+          parts: [
+            { text: prompt }
+          ]
+        }
+      ],
+      systemInstruction: {
+        parts: [
+          { text: systemInstruction }
+        ]
+      },
+      generationConfig: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            summary: { type: Type.STRING },
-            visualBreakdown: { type: Type.STRING },
+            summary: { type: "string" },
+            visualBreakdown: { type: "string" },
             diagramCode: { 
-              type: Type.STRING, 
+              type: "string", 
               description: "Syntactically valid Mermaid.js graph starting with 'graph TD' or 'flowchart TD'. Node names with spaces must be quoted, e.g. A[\"Label\"] --> B[\"Label\"]." 
             },
             steps: {
-              type: Type.ARRAY,
+              type: "array",
               items: {
-                type: Type.OBJECT,
+                type: "object",
                 properties: {
-                  step: { type: Type.STRING },
-                  explanation: { type: Type.STRING },
-                  whyItMatters: { type: Type.STRING },
+                  step: { type: "string" },
+                  explanation: { type: "string" },
+                  whyItMatters: { type: "string" },
                 },
                 required: ["step", "explanation", "whyItMatters"]
               }
             },
-            handsOnPractice: { type: Type.ARRAY, items: { type: Type.STRING } },
-            memoryAnchors: { type: Type.ARRAY, items: { type: Type.STRING } },
+            handsOnPractice: { type: "array", items: { type: "string" } },
+            memoryAnchors: { type: "array", items: { type: "string" } },
             flashcards: {
-              type: Type.ARRAY,
+              type: "array",
               items: {
-                type: Type.OBJECT,
-                properties: { front: { type: Type.STRING }, back: { type: Type.STRING } },
+                type: "object",
+                properties: { front: { type: "string" }, back: { type: "string" } },
                 required: ["front", "back"]
               }
             },
             examTriggers: {
-              type: Type.ARRAY,
+              type: "array",
               description: "List of high-yield keywords seen on exams, with their test clues and easy recall anchors.",
               items: {
-                type: Type.OBJECT,
+                type: "object",
                 properties: {
-                  keyword: { type: Type.STRING, description: "The exam concept or keyword (e.g., 'Anomie' or 'Conflict Theory')." },
-                  triggerPhrase: { type: Type.STRING, description: "Test question clues to look for (e.g., 'look for: normlessness, social change, breakdown of rules')." },
-                  easyRecall: { type: Type.STRING, description: "Bite-sized visual/narrative recall association (e.g., 'Think: A-no-me = No Rules, lost in space.')." }
+                  keyword: { type: "string", description: "The exam concept or keyword (e.g., 'Anomie' or 'Conflict Theory')." },
+                  triggerPhrase: { type: "string", description: "Test question clues to look for (e.g., 'look for: normlessness, social change, breakdown of rules')." },
+                  easyRecall: { type: "string", description: "Bite-sized visual/narrative recall association (e.g., 'Think: A-no-me = No Rules, lost in space.')." }
                 },
                 required: ["keyword", "triggerPhrase", "easyRecall"]
               }
             },
-            pepTalk: { type: Type.STRING },
-            youtubeLink: { type: Type.STRING, description: "A relevant YouTube video URL for the topic." }
+            pepTalk: { type: "string" },
+            youtubeLink: { type: "string", description: "A relevant YouTube video URL for the topic." }
           },
           required: ["summary", "visualBreakdown", "diagramCode", "steps", "handsOnPractice", "memoryAnchors", "flashcards", "examTriggers", "pepTalk", "youtubeLink"]
         }
       }
+    };
+
+    const apiResponse = await fetch(geminiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
     });
 
-    const text = response.text || '{}';
-    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
-    const cleanJson = jsonMatch ? jsonMatch[1] : text;
+    if (!apiResponse.ok) {
+      const errorText = await apiResponse.text();
+      throw new Error(`Gemini API responded with status ${apiResponse.status}: ${errorText}`);
+    }
 
-    return new Response(cleanJson, {
+    const data = await apiResponse.json() as any;
+    
+    // Extract text from the standard Gemini response
+    const textResponse = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    
+    return new Response(textResponse, {
       status: 200,
       headers: { 
         "Content-Type": "application/json",
