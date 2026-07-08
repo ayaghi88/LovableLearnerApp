@@ -1,76 +1,39 @@
-import { LearningProfile, StudyGuideContent } from "../types";
-
-const getClientApiKey = (): string => {
-  // Try to find the API key in client-side environment variables safely in browser
-  const meta = import.meta as any;
-  if (meta && meta.env) {
-    return meta.env.VITE_GEMINI_API_KEY || meta.env.VITE_API_KEY || "";
-  }
-  return "";
-};
-
-export const generateStudyGuide = async (
-  topic: string,
-  profile: LearningProfile,
-  modification?: string
-): Promise<StudyGuideContent> => {
-  console.log("Attempting to generate study guide via server API...");
-
+export const onRequestPost = async (context: any) => {
+  const { request, env } = context;
   try {
-    const response = await fetch("/api/generate-guide", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        topic,
-        profile,
-        modification,
-      }),
-    });
+    const { topic, profile, modification } = await request.json();
 
-    const contentType = response.headers.get("content-type") || "";
-    
-    // Check if the response is successful and is JSON
-    if (response.ok && contentType.includes("application/json")) {
-      const data = await response.json();
-      console.log("Successfully generated study guide via server API!");
-      return data as StudyGuideContent;
+    if (!topic || !profile) {
+      return new Response(JSON.stringify({ error: "Missing topic or profile" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    if (contentType.includes("application/json")) {
-      try {
-        const errData = await response.json();
-        if (errData && errData.error) {
-          throw new Error(`Server Error: ${errData.error}`);
-        }
-      } catch (parseErr) {
-        // Ignore parse error and fall back
-      }
+    const apiKey = env.GEMINI_API_KEY || env.API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ 
+        error: "API Key is missing on the server. Please ensure GEMINI_API_KEY is configured in your Cloudflare Pages Environment Variables." 
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    console.warn(
-      `Server API responded with status ${response.status} (${contentType}). Falling back to client-side generation...`
-    );
-  } catch (err: any) {
-    if (err.message && err.message.startsWith("Server Error:")) {
-      throw err;
-    }
-    console.warn("Server API failed. Trying client-side fallback...", err);
-  }
-
-  // Fallback: Generate guide client-side safely via REST endpoint
-  const clientApiKey = getClientApiKey();
-  if (!clientApiKey) {
-    throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Cloudflare, Netlify, or Vercel), please set GEMINI_API_KEY or API_KEY in your build/deployment environment variables."
-    );
-  }
-
-  console.log("Generating study guide client-side using browser-safe REST fetch...");
-
-  try {
     const profileString = JSON.stringify(profile, null, 2);
+
+    const neurodivergentSection = profile.neurodivergentType && profile.neurodivergentType.length > 0 
+      ? `The learner has selected the following profiles: ${profile.neurodivergentType.join(', ')}. Customize your content according to these guidelines:
+- ADHD: Use high-interest anchors, dynamic action exercises, and gamified or mystery-themed prompts to spark curiosity. Keep steps snappy.
+- Autism: Provide absolute clarity, high logical structure, clear facts, and step-by-step progressions. Avoid vague or highly metaphorical phrases without explanation.
+- Dyslexia: Keep explanation blocks concise. Focus heavily on simple, visual/spatial models, short sentences, and neat bullet lists.
+- Dyscalculia: Focus on non-mathematical analogies, visual maps, storytelling, and conceptual links rather than numbers, equations, or formulas.
+- Sensory: Use extremely calming, gentle, and reassuring tones. Break everything down to prevent information/cognitive overload.`
+      : "Format instructions cleanly for general neurodivergent support (high structure, clear steps, and excellent visual/conceptual mapping).";
+
+    const superpowersSection = profile.superpowers && profile.superpowers.length > 0 
+      ? `The learner possesses these special superpowers: ${profile.superpowers.join(', ')}. Engage these strengths in your generated content!` 
+      : "Leverage their active visual and hands-on learning channels.";
 
     const systemInstruction = `You are "Lovable Learner AI," a sensory-friendly educator specializing in neurodivergent education (ADHD, Autism, Dyslexia, Dyscalculia, Sensory Processing).
 Your tone must be encouraging, clear, friendly, and non-overwhelming. Simple but not childish.
@@ -83,21 +46,10 @@ The user is in the "${profile.ageRange}" age group. You MUST tailor your languag
 - Senior: Use clear, respectful language, patient explanations, and larger context.
 
 NEURODIVERGENT PROFILES TO TARGET (If selected in profile):
-${profile.neurodivergentType && profile.neurodivergentType.length > 0 
-  ? `The learner has selected the following profiles: ${profile.neurodivergentType.join(', ')}. Customize your content according to these guidelines:
-- ADHD: Use high-interest anchors, dynamic action exercises, and gamified or mystery-themed prompts to spark curiosity. Keep steps snappy.
-- Autism: Provide absolute clarity, high logical structure, clear facts, and step-by-step progressions. Avoid vague or highly metaphorical phrases without explanation.
-- Dyslexia: Keep explanation blocks concise. Focus heavily on simple, visual/spatial models, short sentences, and neat bullet lists.
-- Dyscalculia: Focus on non-mathematical analogies, visual maps, storytelling, and conceptual links rather than numbers, equations, or formulas.
-- Sensory: Use extremely calming, gentle, and reassuring tones. Break everything down to prevent information/cognitive overload.`
-  : `Format instructions cleanly for general neurodivergent support (high structure, clear steps, and excellent visual/conceptual mapping).`
-}
+${neurodivergentSection}
 
 SUPERPOWERS TO LEVERAGE:
-${profile.superpowers && profile.superpowers.length > 0 
-  ? `The learner possesses these special superpowers: ${profile.superpowers.join(', ')}. Engage these strengths in your generated content!` 
-  : `Leverage their active visual and hands-on learning channels.`
-}
+${superpowersSection}
 
 CONTENT RULES:
 1. Flashcards: Generate strictly between 10 and 20 high-quality flashcards with highly digestible facts.
@@ -114,8 +66,8 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
     let prompt = `TOPIC: ${topic}\n\nPROFILE:\n${profileString}`;
     if (modification) prompt += `\n\nUSER REQUEST: ${modification}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${clientApiKey}`;
-    
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey}`;
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -181,20 +133,43 @@ TARGET AUDIENCE: Ages 8 to Adult.`;
 
     if (!response.ok) {
       const errText = await response.text();
-      throw new Error(`Gemini API responded with status ${response.status}: ${errText}`);
+      return new Response(JSON.stringify({ error: `Gemini API responded with status ${response.status}: ${errText}` }), {
+        status: response.status,
+        headers: { "Content-Type": "application/json" }
+      });
     }
 
-    const resJson = await response.json();
+    const resJson: any = await response.json();
     const text = resJson.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
     const cleanJson = jsonMatch ? jsonMatch[1] : text;
 
-    console.log("Successfully generated study guide client-side!");
-    return JSON.parse(cleanJson) as StudyGuideContent;
-  } catch (clientErr: any) {
-    console.error("Client-side generation failed:", clientErr);
-    throw new Error(
-      clientErr.message || "Failed to generate study guide. Please check your connection and API Key."
-    );
+    return new Response(cleanJson, {
+      status: 200,
+      headers: { 
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      }
+    });
+
+  } catch (err: any) {
+    console.error("Cloudflare Pages Function Gemini Error:", err);
+    return new Response(JSON.stringify({ error: err.message || "Failed to generate study guide" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" }
+    });
   }
+};
+
+export const onRequestOptions = async () => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    }
+  });
 };
