@@ -26,7 +26,7 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       title: "The Problem",
       subtitle: "Systemic Academic Burnout",
       points: [
-        "1 in 5 individuals are neurodivergent globally.",
+        "1 in 5 learners have neurodivergent traits globally.",
         "Traditional EdTech adds noise, not clarity.",
         "Massive disconnect between learning style and content delivery."
       ],
@@ -34,13 +34,23 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     },
     {
       title: "Market Opportunity",
-      subtitle: "A $150 Billion Addressable Market",
+      subtitle: "$2.9B Immediate Niched SAM",
       points: [
-        "1.5 Billion+ people globally identify as neurodivergent.",
-        "$150B spend in adult lifelong learning and self-paced upskilling.",
+        "1 in 5 learners have neurodivergent traits.",
+        "$2.9B immediate niched SAM (inside a $213B Total Addressable Market).",
         "Significant lack of specialized accessibility tools for this demographic."
       ],
       icon: <BarChart3 className="w-20 h-20 text-brand-green mb-4" />
+    },
+    {
+      title: "Competitive Landscape",
+      subtitle: "Highly Fragmented / No AI-First ND Leader",
+      points: [
+        "No dominant, AI-first study companion designed exclusively for neurodivergent learners.",
+        "Highly fragmented solutions fail to combine personalization with visual-first layouts.",
+        "Mainstream EdTech platforms completely lack neurodivergent-first architecture."
+      ],
+      icon: <Zap className="w-20 h-20 text-yellow-500 mb-4" />
     },
     {
       title: "Our Solution",
@@ -50,7 +60,7 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         "Structured step-by-step paths with mandatory 'WHY' context.",
         "Sensory-friendly, clean UI to eliminate cognitive overload."
       ],
-      icon: <Zap className="w-20 h-20 text-yellow-500 mb-4" />
+      icon: <CheckCircle2 className="w-20 h-20 text-brand-green mb-4" />
     },
     {
       title: "Traction & Growth",
@@ -120,23 +130,23 @@ export const Investor: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="absolute top-0 right-0 w-80 h-80 bg-brand-blue/20 rounded-full blur-[120px] pointer-events-none group-hover:scale-110 transition-transform duration-1000"></div>
         <div className="relative z-10">
           <h2 className="text-3xl font-bold font-display mb-12 flex items-center gap-3">
-            <BarChart3 className="text-brand-blue w-8 h-8" /> Market Potential
+            <BarChart3 className="text-brand-blue w-8 h-8" /> Market Potential & landscape
           </h2>
           <div className="grid md:grid-cols-3 gap-12 text-center">
             <div className="space-y-3">
-              <div className="text-6xl font-bold text-brand-blue">1.5B</div>
-              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Global Population</p>
-              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">Neurodivergent learners waiting for a visual-first tool.</p>
+              <div className="text-5xl md:text-6xl font-bold text-brand-blue">1 in 5</div>
+              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Learner Ratio</p>
+              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">1 in 5 learners have neurodivergent traits and require tailored pedagogical tools.</p>
             </div>
             <div className="space-y-3">
-              <div className="text-6xl font-bold text-brand-green">$150B</div>
-              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Addressable Market</p>
-              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">Total annual spend in personalized adult education.</p>
+              <div className="text-5xl md:text-6xl font-bold text-brand-green">$2.9B</div>
+              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Immediate SAM</p>
+              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">Immediate niched Serviceable Addressable Market (inside a $213B TAM).</p>
             </div>
             <div className="space-y-3">
-              <div className="text-6xl font-bold text-yellow-400">0</div>
-              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Competitors</p>
-              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">Mainstream apps lack specialized ND-first architecture.</p>
+              <div className="text-5xl md:text-6xl font-bold text-yellow-400">Fragmented</div>
+              <p className="text-sm text-gray-400 uppercase font-black tracking-widest">Landscape</p>
+              <p className="text-xs text-gray-500 font-medium px-4 opacity-80">Highly fragmented market with no dominant AI-first neurodivergent-led tool.</p>
             </div>
           </div>
         </div>

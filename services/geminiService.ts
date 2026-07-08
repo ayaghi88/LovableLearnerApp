@@ -40,10 +40,24 @@ export const generateStudyGuide = async (
       return data as StudyGuideContent;
     }
 
+    if (contentType.includes("application/json")) {
+      try {
+        const errData = await response.json();
+        if (errData && errData.error) {
+          throw new Error(`Server Error: ${errData.error}`);
+        }
+      } catch (parseErr) {
+        // Ignore parse error and fall back
+      }
+    }
+
     console.warn(
       `Server API responded with status ${response.status} (${contentType}). Falling back to client-side generation...`
     );
-  } catch (err) {
+  } catch (err: any) {
+    if (err.message && err.message.startsWith("Server Error:")) {
+      throw err;
+    }
     console.warn("Server API failed. Trying client-side fallback...", err);
   }
 
