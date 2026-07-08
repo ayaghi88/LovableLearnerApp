@@ -15,6 +15,7 @@ export const generateStudyGuide = async (
   modification?: string
 ): Promise<StudyGuideContent> => {
   console.log("Attempting to generate study guide via server API...");
+  const clientApiKey = getClientApiKey();
 
   try {
     const response = await fetch("/api/generate-guide", {
@@ -32,39 +33,48 @@ export const generateStudyGuide = async (
     const contentType = response.headers.get("content-type") || "";
     
     // Check if the response is successful and is JSON
-    if (response.ok && contentType.includes("application/json")) {
-      const data = await response.json();
-      console.log("Successfully generated study guide via server API!");
-      return data as StudyGuideContent;
-    }
-
-    if (contentType.includes("application/json")) {
-      try {
-        const errData = await response.json();
-        if (errData && errData.error) {
-          throw new Error(`Server Error: ${errData.error}`);
-        }
-      } catch (parseErr) {
-        // Ignore parse error and fall back
+    if (response.ok) {
+      if (contentType.includes("application/json")) {
+        const data = await response.json();
+        console.log("Successfully generated study guide via server API!");
+        return data as StudyGuideContent;
+      } else {
+        const text = await response.text();
+        throw new Error(`Server returned non-JSON response: ${text.substring(0, 150)}`);
       }
+    } else {
+      // Server returned an error status (4xx/5xx)
+      let serverErrMsg = `Status ${response.status}`;
+      if (contentType.includes("application/json")) {
+        try {
+          const errData = await response.json();
+          if (errData && errData.error) {
+            serverErrMsg = errData.error;
+          }
+        } catch (e) {}
+      } else {
+        try {
+          const text = await response.text();
+          if (text) serverErrMsg = `${response.status}: ${text.substring(0, 150)}`;
+        } catch (e) {}
+      }
+      throw new Error(serverErrMsg);
     }
-
-    console.warn(
-      `Server API responded with status ${response.status} (${contentType}). Falling back to client-side generation...`
-    );
   } catch (err: any) {
-    if (err.message && err.message.startsWith("Server Error:")) {
-      throw err;
+    console.error("Server API failed:", err);
+    
+    if (clientApiKey) {
+      console.warn("Attempting client-side fallback...");
+    } else {
+      // No client-side key, throw highly descriptive error
+      throw new Error(
+        `Unable to reach or process the server API: ${err.message || err}.\n\n` +
+        `If you are deploying on Cloudflare Pages, please ensure:\n` +
+        `1. Your "GEMINI_API_KEY" or "API_KEY" environment variable is configured in the Cloudflare Pages Dashboard under Settings -> Environment Variables (make sure to set it for both "Production" and "Preview" environments).\n` +
+        `2. You have fully redeployed the site in Cloudflare Pages after updating the environment variables for them to take effect.\n` +
+        `3. Your Cloudflare Pages build is configured with standard Page Functions (with the root "/functions" directory).`
+      );
     }
-    console.warn("Server API failed. Trying client-side fallback...", err);
-  }
-
-  // Fallback: Generate guide client-side safely via REST endpoint
-  const clientApiKey = getClientApiKey();
-  if (!clientApiKey) {
-    throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Cloudflare, Netlify, or Vercel), please set GEMINI_API_KEY or API_KEY in your build/deployment environment variables."
-    );
   }
 
   console.log("Generating study guide client-side using browser-safe REST fetch...");
