@@ -32,41 +32,23 @@ export const generateStudyGuide = async (
     });
 
     const contentType = response.headers.get("content-type") || "";
-    const responseText = await response.text();
     
     // Check if the response is successful and is JSON
     if (response.ok && contentType.includes("application/json")) {
-      try {
-        const data = JSON.parse(responseText);
-        console.log("Successfully generated study guide via server API!");
-        return data as StudyGuideContent;
-      } catch (jsonErr) {
-        console.error("Failed to parse successful response JSON", jsonErr);
-      }
+      const data = await response.json();
+      console.log("Successfully generated study guide via server API!");
+      return data as StudyGuideContent;
     }
 
-    // If it's a server error response (not ok)
-    if (!response.ok) {
-      let errorMessage = `Server responded with status ${response.status}`;
-      if (contentType.includes("application/json")) {
-        try {
-          const errData = JSON.parse(responseText);
-          if (errData && errData.error) {
-            errorMessage = errData.error;
-          } else if (errData && errData.message) {
-            errorMessage = errData.message;
-          }
-        } catch (e) {
-          if (responseText && responseText.length < 250) {
-            errorMessage = responseText;
-          }
+    if (contentType.includes("application/json")) {
+      try {
+        const errData = await response.json();
+        if (errData && errData.error) {
+          throw new Error(`Server Error: ${errData.error}`);
         }
-      } else {
-        if (responseText && responseText.length < 250) {
-          errorMessage = responseText;
-        }
+      } catch (parseErr) {
+        // Ignore parse error and fall back
       }
-      throw new Error(`Server Error: ${errorMessage}`);
     }
 
     console.warn(
@@ -83,7 +65,7 @@ export const generateStudyGuide = async (
   const clientApiKey = getClientApiKey();
   if (!clientApiKey) {
     throw new Error(
-      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting on Cloudflare, please configure GEMINI_API_KEY as an Environment Variable in your Cloudflare Pages dashboard (under Settings -> Environment Variables) so that our Pages Functions can securely communicate with Gemini."
+      "Unable to reach the server API, and no client-side API Key is configured. If you are hosting statically (e.g. on Netlify or Vercel), please set GEMINI_API_KEY or API_KEY in your deployment environment variables."
     );
   }
 
